@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MINDEX</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; }
+    header { background:#2c3e50; color:white; text-align:center; padding:1rem; font-size:1.5rem; }
+    nav { display:flex; justify-content:center; background:#34495e; }
+    nav a { color:white; text-decoration:none; padding:1rem; display:block; }
+    nav a:hover { background:#2c3e50; }
+    .content { padding:1rem; }
+    table { width:100%; border-collapse:collapse; margin-top:1rem; }
+    table, td { border:1px solid #ddd; }
+    td { padding:0.8rem; cursor:pointer; }
+    td:nth-child(2){ font-weight:bold; }
+    /* Modal */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000; }
+    .modal-content { background:#fff; padding:1rem; border-radius:8px; max-width:95%; max-height:90%; overflow:auto; }
+    .months span { display:inline-block; margin:0.3rem; padding:0.5rem 1rem; border:1px solid #ccc; border-radius:5px; cursor:pointer; }
+    .months span.active { font-weight:bold; background:#eee; }
+    .btn { display:inline-block; margin-top:1rem; padding:0.5rem 1rem; background:#27ae60; color:white; border-radius:5px; cursor:pointer; }
+    .btn:hover { background:#219150; }
+    .highlight { font-weight:bold; }
+    .red { color:red; }
+    .blue { color:blue; }
+    .green { color:green; }
+    ul { list-style:none; padding:0; }
+    ul li { margin:0.3rem 0; cursor:pointer; }
+    .input-row { margin:0.5rem 0; }
+  </style>
+</head>
+<body>
+
+<header>MINDEX</header>
+<nav>
+  <a href="#" id="tab-ocenjevanja">OCENJEVANJA</a>
+  <a href="#">OCENE</a>
+  <a href="#">NASTAVITVE</a>
+</nav>
+
+<div class="content" id="ocenjevanja-content">
+  <h2>Ocenjevanja</h2>
+  <table>
+    <tbody id="subjects-table">
+      <tr><td>ANJ</td><td></td></tr>
+      <tr><td>FIZ</td><td></td></tr>
+      <tr><td>GOB</td><td></td></tr>
+      <tr><td>ISZ</td><td></td></tr>
+      <tr><td>KEM</td><td></td></tr>
+      <tr><td>MAT</td><td></td></tr>
+      <tr><td>MOB</td><td></td></tr>
+      <tr><td>NEM</td><td></td></tr>
+      <tr><td>SLO</td><td></td></tr>
+      <tr><td>ŠVZ</td><td></td></tr>
+      <tr><td>TRP</td><td></td></tr>
+      <tr><td>ZGO</td><td></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal 1: Izbira meseca -->
+<div class="modal" id="modal-month">
+  <div class="modal-content">
+    <h3 id="modal-subject"></h3>
+    <p>Izberi mesec:</p>
+    <div class="months">
+      <span>Januar</span><span>Februar</span><span>Marec</span><span>April</span>
+      <span>Maj</span><span>Junij</span><span>Julij</span><span>Avgust</span>
+      <span>September</span><span>Oktober</span><span>November</span><span>December</span>
+    </div>
+    <div id="continue-btn" class="btn" style="display:none;">Nadaljuj</div>
+  </div>
+</div>
+
+<!-- Modal 2: Seznam ocenjevanj -->
+<div class="modal" id="modal-list">
+  <div class="modal-content">
+    <h3><span id="subject-title" style="cursor:pointer;"></span> – <span id="month-title"></span></h3>
+    <h4>Za izbran predmet:</h4>
+    <ul id="subject-list"></ul>
+    <h4>Za ostale predmete:</h4>
+    <ul id="others-list"></ul>
+  </div>
+</div>
+
+<!-- Modal 3: Dodaj ocenjevanje -->
+<div class="modal" id="modal-add">
+  <div class="modal-content">
+    <h3>Dodaj ocenjevanje za <span id="add-subject"></span></h3>
+    <div class="input-row">
+      <label>Datum: <input type="date" id="exam-date"></label>
+    </div>
+    <div class="input-row">
+      <label>Tip ocene:</label><br>
+      <button class="btn" onclick="selectType('PISNA')">Pisna</button>
+      <button class="btn" onclick="selectType('USTNA')">Ustna</button>
+      <button class="btn" onclick="selectType('IZDELEK')">Izdelek</button>
+    </div>
+    <div id="selected-type" style="margin-top:1rem;"></div>
+    <br>
+    <button class="btn" id="save-exam">Shrani</button>
+  </div>
+</div>
+
+<!-- Modal 4: Uredi/Izbriši -->
+<div class="modal" id="modal-edit">
+  <div class="modal-content">
+    <h3>Uredi ocenjevanje</h3>
+    <div class="input-row">
+      <label>Datum: <input type="date" id="edit-date"></label>
+    </div>
+    <div class="input-row">
+      <label>Tip ocene:</label><br>
+      <button class="btn" onclick="editSelectType('PISNA')">Pisna</button>
+      <button class="btn" onclick="editSelectType('USTNA')">Ustna</button>
+      <button class="btn" onclick="editSelectType('IZDELEK')">Izdelek</button>
+    </div>
+    <div id="edit-type-display" style="margin-top:1rem;"></div>
+    <br>
+    <button class="btn" id="update-exam">Posodobi</button>
+    <button class="btn" id="delete-exam">Izbriši</button>
+    <button class="btn" id="close-edit">Zapri</button>
+  </div>
+</div>
+
+<script>
+let selectedSubject=null;
+let selectedMonth=null;
+let selectedType=null;
+let editType=null;
+let exams=JSON.parse(localStorage.getItem("exams")||"{}");
+let editingExam=null;
+
+const subjectsTable=document.getElementById("subjects-table");
+const modalMonth=document.getElementById("modal-month");
+const modalList=document.getElementById("modal-list");
+const modalAdd=document.getElementById("modal-add");
+const modalEdit=document.getElementById("modal-edit");
+const modalSubject=document.getElementById("modal-subject");
+const continueBtn=document.getElementById("continue-btn");
+const months=document.querySelectorAll(".months span");
+const subjectTitle=document.getElementById("subject-title");
+const monthTitle=document.getElementById("month-title");
+const subjectList=document.getElementById("subject-list");
+const othersList=document.getElementById("others-list");
+const addSubject=document.getElementById("add-subject");
+const saveExam=document.getElementById("save-exam");
+const selectedTypeDiv=document.getElementById("selected-type");
+const editDate=document.getElementById("edit-date");
+const editTypeDisplay=document.getElementById("edit-type-display");
+const updateExamBtn=document.getElementById("update-exam");
+const deleteExamBtn=document.getElementById("delete-exam");
+const closeEditBtn=document.getElementById("close-edit");
+
+// Odpri modal za mesec
+subjectsTable.addEventListener("click",(e)=>{
+ if(e.target.tagName==="TD"&&e.target.cellIndex===0){
+   selectedSubject=e.target.textContent;
+   modalSubject.textContent="Ocenjevanja za "+selectedSubject;
+   modalMonth.style.display="flex";
+ }
+});
+// Zapri modal, če klikneš zunaj
+window.addEventListener("click",(e)=>{
+ if(e.target.classList.contains("modal")){
+   e.target.style.display="none";
+   resetMonth();
+ }
+});
+// Označi mesec
+months.forEach(m=>{
+ m.addEventListener("click",()=>{
+   months.forEach(x=>x.classList.remove("active"));
+   m.classList.add("active");
+   selectedMonth=m.textContent;
+   continueBtn.style.display="inline-block";
+ });
+});
+// Nadaljuj na seznam
+continueBtn.addEventListener("click",()=>{
+ showList();
+ modalMonth.style.display="none";
+ resetMonth();
+});
+function resetMonth(){ months.forEach(m=>m.classList.remove("active")); continueBtn.style.display="none"; selectedMonth=null; }
+function showList(){
+ subjectTitle.textContent=selectedSubject;
+ addSubject.textContent=selectedSubject;
+ monthTitle.textContent=selectedMonth;
+ renderLists();
+ modalList.style.display="flex";
+}
+function renderLists(){
+ subjectList.innerHTML=""; othersList.innerHTML="";
+ let data=exams[selectedSubject]?.[selectedMonth]||[];
+ if(data.length===0){
+   let li=document.createElement("li");
+   li.textContent="Ni ocenjevanj.";
+   subjectList.appendChild(li);
+ } else {
+   data.forEach((ex,i)=>{
+     let li=document.createElement("li");
+     li.innerHTML=formatExam(ex);
+     li.onclick=()=>openEdit(selectedSubject,selectedMonth,i,ex);
+     subjectList.appendChild(li);
+   });
+ }
+ let hasOthers=false;
+ for(let subj in exams){
+   if(subj!==selectedSubject){
+     let arr=exams[subj]?.[selectedMonth]||[];
+     arr.forEach(ex=>{
+       let li=document.createElement("li");
+       li.textContent=subj+" - "+formatExam(ex);
+       othersList.appendChild(li);
+       hasOthers=true;
+     });
+   }
+ }
+ if(!hasOthers){
+   let li=document.createElement("li");
+   li.textContent="Ni ocenjevanj.";
+   othersList.appendChild(li);
+ }
+}
+function formatExam(ex){
+ let cls=ex.type==="PISNA"?"red":ex.type==="USTNA"?"blue":"green";
+ return `<span class="highlight ${cls}">${ex.date} (${ex.type})</span>`;
+}
+// Klik na naslov predmeta za dodajanje
+subjectTitle.onclick=()=>{
+ modalList.style.display="none";
+ modalAdd.style.display="flex";
+};
+// Izberi tip ocene
+function selectType(type){
+ selectedType=type;
+ let cls=type==="PISNA"?"red":type==="USTNA"?"blue":"green";
+ selectedTypeDiv.innerHTML=`<span class="highlight ${cls}">${type}</span>`;
+}
+// Shrani ocenjevanje
+saveExam.onclick=()=>{
+ let date=document.getElementById("exam-date").value;
+ if(!date||!selectedType) return alert("Izberi datum in tip!");
+ if(!exams[selectedSubject]) exams[selectedSubject]={};
+ if(!exams[selectedSubject][selectedMonth]) exams[selectedSubject][selectedMonth]=[];
+ exams[selectedSubject][selectedMonth].push({date,type:selectedType});
+ localStorage.setItem("exams",JSON.stringify(exams));
+ modalAdd.style.display="none";
+ renderTable();
+};
+// Renderiraj tabelo
+function renderTable(){
+ [...subjectsTable.rows].forEach(r=>{
+   let subj=r.cells[0].textContent;
+   let all=exams[subj]||{};
+   let dates=[];
+   for(let m in all){
+     all[m].forEach(ex=>dates.push(formatExam(ex)));
+   }
+   r.cells[1].innerHTML=dates.join(", ");
+ });
+}
+renderTable();
+
+// Uredi / izbriši
+function openEdit(subj,month,index,ex){
+ editingExam={subj,month,index};
+ editDate.value=ex.date;
+ editType=ex.type;
+ showEditType();
+ modalEdit.style.display="flex";
+}
+function showEditType(){
+ let cls=editType==="PISNA"?"red":editType==="USTNA"?"blue":"green";
+ editTypeDisplay.innerHTML=`<span class="highlight ${cls}">${editType}</span>`;
+}
+function editSelectType(type){
+ editType=type;
+ showEditType();
+}
+updateExamBtn.onclick=()=>{
+ if(editingExam){
+   let newDate=editDate.value;
+   if(!newDate||!editType) return alert("Izberi datum in tip!");
+   exams[editingExam.subj][editingExam.month][editingExam.index]={date:newDate,type:editType};
+   localStorage.setItem("exams",JSON.stringify(exams));
+   renderTable();
+   modalEdit.style.display="none";
+   modalList.style.display="flex";
+ }
+};
+deleteExamBtn.onclick=()=>{
+ if(editingExam){
+   exams[editingExam.subj][editingExam.month].splice(editingExam.index,1);
+   localStorage.setItem("exams",JSON.stringify(exams));
+   renderTable();
+   modalEdit.style.display="none";
+   modalList.style.display="flex";
+ }
+};
+closeEditBtn.onclick=()=>{ modalEdit.style.display="none"; modalList.style.display="flex"; };
+</script>
+
+</body>
+</html>
