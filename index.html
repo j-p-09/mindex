@@ -1,1121 +1,1548 @@
 <!DOCTYPE html>
 <html lang="sl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MINDEX - informacijski sistem</title>
-<style>
-  /* --- Minimal, čista, responsive styles (no heavy design) --- */
-  :root{
-    --bg:#f4f6f8;
-    --card:#fff;
-    --accent:#1f6feb;
-    --danger:#d9534f;
-    --muted:#666;
-    --ok:#2e8b57;
-    --maxWidth:1100px;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    font-family:Inter, Roboto,Arial, Helvetica, sans-serif;
-    background:var(--bg);
-    color:#111;
-    line-height:1.3;
-    padding:12px;
-    -webkit-font-smoothing:antialiased;
-  }
-  .container{max-width:var(--maxWidth);margin:0 auto;}
-  header.appbar{
-    display:flex;align-items:center;gap:12px;background:var(--card);
-    padding:10px;border-radius:8px;margin-bottom:12px;
-    box-shadow:0 1px 2px rgba(0,0,0,.05);
-  }
-  header.appbar h1{font-size:18px;margin:0}
-  header.appbar .user{margin-left:auto;font-size:14px;color:var(--muted)}
-  nav.tabs{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
-  nav.tabs button{padding:8px 10px;border-radius:6px;border:1px solid #e2e6ea;background:white;cursor:pointer}
-  nav.tabs button.active{background:var(--accent);color:white;border-color:var(--accent)}
-  .card{background:var(--card);padding:12px;border-radius:8px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  .col{flex:1;min-width:200px}
-  table{width:100%;border-collapse:collapse}
-  th,td{padding:8px;border:1px solid #e6eaef;text-align:left;font-size:14px}
-  th{background:#f8fafc}
-  input[type="text"],input[type="password"],input[type="date"],select,textarea{
-    width:100%;padding:8px;border:1px solid #d7dae0;border-radius:6px;font-size:14px
-  }
-  button.btn{padding:8px 10px;border-radius:6px;border:0;cursor:pointer}
-  button.primary{background:var(--accent);color:white}
-  button.warn{background:var(--danger);color:white}
-  small.muted{color:var(--muted);font-size:12px}
-  .flex{display:flex;gap:8px;align-items:center}
-  .center{text-align:center}
-  .slot{border:1px dashed #ddd;padding:6px;border-radius:6px;min-height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-  .slot.free{background:#fff}
-  .slot.open{background:#fff}
-  .slot.saved{background:#e6ffec;border:1px solid #b3e6c1}
-  .badge{display:inline-block;padding:3px 6px;border-radius:999px;font-size:12px;background:#eee}
-  .absent{color:#c0392b;font-weight:bold}
-  .present{color:#111}
-  /* modal */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:12px;z-index:9999}
-  .modal .dialog{background:white;padding:14px;border-radius:8px;min-width:280px;max-width:720px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
-  .modal .dialog h3{margin:0 0 8px 0}
-  .modal .row{margin-top:8px}
-  /* responsive */
-  @media (max-width:720px){
-    th,td{font-size:13px}
-    header.appbar{flex-direction:column;align-items:flex-start;gap:8px}
-    .row{flex-direction:column;align-items:stretch}
-  }
-  /* small helpers */
-  .muted{color:var(--muted)}
-  .grid-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
-  .tiny{font-size:12px}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MINDEX — informacijski sistem (prototip)</title>
+  <style>
+    /* Minimalni, čisti slog — prilagojen za telefon in računalnik */
+    :root{
+      --bg:#f5f6f8;
+      --card:#fff;
+      --muted:#666;
+      --accent:#0b5ed7;
+      --danger:#dc3545;
+      --success:#198754;
+      --border:#ddd;
+      --shadow: 0 2px 6px rgba(0,0,0,0.06);
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:#111;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    header{
+      background:linear-gradient(90deg, #fff, #fafafa);
+      border-bottom:1px solid var(--border);
+      padding:10px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .brand h1{
+      margin:0;
+      font-size:18px;
+    }
+    .small-muted{color:var(--muted); font-size:12px}
+
+    main{
+      padding:12px;
+      flex:1;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+
+    /* layout */
+    .sidebar{
+      width:260px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:10px;
+      box-shadow:var(--shadow);
+      height:calc(100vh - 88px);
+      overflow:auto;
+    }
+
+    .content{
+      flex:1;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      height:calc(100vh - 88px);
+      overflow:auto;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:12px;
+      box-shadow:var(--shadow);
+    }
+
+    .menu-btn{
+      display:block;
+      width:100%;
+      padding:8px 10px;
+      text-align:left;
+      border-radius:6px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      font-weight:600;
+      margin-bottom:6px;
+    }
+    .menu-btn.active{
+      background:linear-gradient(90deg,#eef5ff,#fff);
+      color:var(--accent);
+      box-shadow:inset 0 0 0 1px rgba(11,94,215,0.06);
+    }
+
+    .row{display:flex; gap:8px; align-items:center}
+    .row.space{justify-content:space-between}
+    .muted{color:var(--muted)}
+    .tiny{font-size:12px}
+    input[type="text"], input[type="date"], select, textarea{
+      width:100%;
+      padding:8px;
+      border:1px solid var(--border);
+      border-radius:6px;
+      background:transparent;
+      outline:none;
+    }
+    table{width:100%; border-collapse:collapse; font-size:13px}
+    th, td{padding:8px; border-bottom:1px solid #eee; text-align:left}
+    th {background: #fafafa; font-weight:700; font-size:13px}
+    .btn{
+      padding:8px 10px; border-radius:6px; border:none; cursor:pointer;
+      background:var(--accent); color:white; font-weight:600;
+    }
+    .btn.ghost{background:transparent; color:var(--accent); border:1px solid var(--border)}
+    .btn.danger{background:var(--danger)}
+    .btn.small{padding:6px 8px; font-size:13px}
+    .icon{font-weight:700; margin-right:6px}
+
+    /* modal */
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,0.45);
+      display:none; align-items:center; justify-content:center; z-index:9999;
+    }
+    .modal{
+      width:920px;
+      max-width:96%;
+      background:var(--card);
+      border-radius:8px;
+      padding:12px;
+      border:1px solid var(--border);
+    }
+    .modal .modal-title{font-weight:800; margin-bottom:10px}
+    .modal .modal-body{max-height:60vh; overflow:auto}
+
+    /* small components */
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-weight:700}
+    .badge.green{background:#e9f7ef;color:var(--success)}
+    .badge.red{background:#fff0f0;color:var(--danger)}
+    .absent{color:var(--danger); font-weight:800}
+    .open-hour{font-weight:700}
+    .saved-hour{color:var(--success); font-weight:800}
+
+    /* responsive */
+    @media (max-width:900px){
+      .sidebar{display:none}
+      main{padding:8px}
+      header{padding:8px}
+    }
+
+    /* redovalnica specific */
+    .grade-span{margin-right:6px; cursor:pointer; padding:3px 6px; border-radius:4px; display:inline-block}
+    .grade-span.red{color:#a80000}
+    .grade-span.blue{color:#0b5ed7}
+    .grade-span.green{color:#1b7a2b}
+    .final-grade{font-size:1.2em; font-weight:800}
+    .grade-row td{vertical-align:middle}
+
+    /* little helpers */
+    .flex{display:flex; gap:8px; align-items:center}
+    .flex-col{display:flex; flex-direction:column; gap:8px}
+    .pill{padding:6px 8px;border-radius:999px;background:#f3f4f6;border:1px solid var(--border)}
+    .center{text-align:center}
+    .link-like{color:var(--accent); cursor:pointer; text-decoration:underline}
+
+  </style>
 </head>
 <body>
-<div class="container">
-  <header class="appbar">
-    <h1>MINDEX — informacijski sistem</h1>
-    <div class="user" id="topInfo">Prijava potrebna</div>
-  </header>
 
-  <!-- --- Login screen --- -->
-  <div id="loginView" class="card">
-    <h2>Prijava</h2>
-    <div style="max-width:420px">
-      <label>Uporabniško ime</label>
-      <input id="loginUser" type="text" placeholder="admin ali profesor..." />
-      <label style="margin-top:8px">Geslo</label>
-      <input id="loginPass" type="password" placeholder="geslo" />
-      <div style="margin-top:8px" class="flex">
-        <button class="btn primary" onclick="doLogin()">Prijava</button>
-        <button class="btn" onclick="seedDemo()">Naloži demo podatke</button>
-        <small class="muted">Ali uporabite podatke admina, ki so navedeni na koncu strani.</small>
-      </div>
+<header>
+  <div class="brand">
+    <div style="width:40px;height:40px;border-radius:6px;background:linear-gradient(135deg,#0b5ed7,#6aa8ff);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">
+      M
+    </div>
+    <div>
+      <h1>MINDEX</h1>
+      <div class="small-muted">Enostaven šolski IS (prototip)</div>
     </div>
   </div>
 
-  <!-- --- Main app --- -->
-  <div id="appView" style="display:none">
-    <div class="card" id="adminPanelHeader" style="display:none">
-      <div class="row">
-        <div><strong id="welcomeTitle">Zdravo</strong></div>
-        <div class="muted" id="roleInfo"></div>
-        <div class="flex" style="margin-left:auto">
-          <div id="currentSelected" class="muted tiny"></div>
-          <button class="btn" onclick="logout()">Odjava</button>
+  <div id="top-right" class="row">
+    <div id="logged-as" class="muted tiny"></div>
+    <button id="logoutBtn" class="btn ghost small" style="display:none">Odjava</button>
+  </div>
+</header>
+
+<main>
+  <!-- SIDEBAR za ADMIN -->
+  <aside class="sidebar card" id="adminSidebar" style="display:none">
+    <div style="font-weight:800;margin-bottom:8px">ADMIN MENI</div>
+    <button class="menu-btn" data-view="ucenci" id="menuUcenci">UČENCI</button>
+    <button class="menu-btn" data-view="profesorji" id="menuProfesorji">PROFESORJI</button>
+    <button class="menu-btn" data-view="razredi" id="menuRazredi">RAZREDI</button>
+    <button class="menu-btn" data-view="urniki" id="menuUrniki">URNIKI</button>
+
+    <div style="margin-top:12px">
+      <div class="tiny muted">Hitri podatki</div>
+      <div style="margin-top:6px" id="adminStats"></div>
+    </div>
+  </aside>
+
+  <!-- SIDEBAR za PROF -->
+  <aside class="sidebar card" id="profSidebar" style="display:none">
+    <div style="font-weight:800;margin-bottom:8px">PROF MENI</div>
+    <button class="menu-btn prof-menu" data-view="domov">DOMOV</button>
+    <button class="menu-btn prof-menu" data-view="redovalnica">REDOVALNICA</button>
+    <button class="menu-btn prof-menu" data-view="razred">RAZRED</button>
+
+    <div style="margin-top:12px">
+      <div class="tiny muted">Tvoj urnik</div>
+      <div style="margin-top:6px" id="profQuickSchedule"></div>
+    </div>
+  </aside>
+
+  <!-- GLAVNA VSEBINA -->
+  <section class="content" id="mainContent">
+
+    <!-- PRIJAVA -->
+    <div id="loginView" class="card" style="max-width:520px;margin:auto">
+      <h2>Prijava v MINDEX</h2>
+      <div class="tiny muted">Uporabi spodnje podatke ali ustvarjenega profesorja/admina.</div>
+      <div style="margin-top:12px" class="flex-col">
+        <label>Uporabniško ime</label>
+        <input type="text" id="loginUser" placeholder="npr. admin" />
+        <label>Geslo</label>
+        <input type="text" id="loginPass" placeholder="geslo" />
+        <div class="row space" style="margin-top:8px">
+          <div>
+            <button id="loginBtn" class="btn">Prijava</button>
+            <button id="demoSeed" class="btn ghost small" title="Naloži demo podatke">Naloži DEMO</button>
+          </div>
+          <div class="muted tiny">Privzeto: admin / admin123 (pišem na dnu)</div>
         </div>
       </div>
-      <nav class="tabs" id="mainTabs"></nav>
     </div>
 
-    <!-- Admin / Professor common containers, content switches by menu -->
-    <div id="contentArea">
-      <!-- Students -->
-      <div id="studentsView" class="card" style="display:none">
+    <!-- ADMIN: UČENCI -->
+    <div id="ucenciView" class="card" style="display:none">
+      <div class="row space">
+        <h2>UČENCI</h2>
         <div class="row">
-          <div><h3>Učenci</h3></div>
-          <div style="margin-left:auto">
-            <button class="btn primary" onclick="openStudentModal()">Dodaj učenca</button>
-            <button class="btn" onclick="exportData('students')">Izvozi (JSON)</button>
-          </div>
-        </div>
-        <div style="overflow:auto;margin-top:8px">
-          <table id="studentsTable">
-            <thead><tr><th>Ime in priimek</th><th>Rojstni datum</th><th>Opombe</th><th>Akcije</th></tr></thead>
-            <tbody></tbody>
-          </table>
+          <button class="btn" id="addStudentBtn">Dodaj učenca</button>
+          <input type="text" id="searchStudents" placeholder="Išči po imenu..." />
         </div>
       </div>
 
-      <!-- Professors -->
-      <div id="teachersView" class="card" style="display:none">
+      <div style="margin-top:10px" id="studentsTableWrap"></div>
+    </div>
+
+    <!-- ADMIN: PROFESORJI -->
+    <div id="profesorjiView" class="card" style="display:none">
+      <div class="row space">
+        <h2>PROFESORJI</h2>
         <div class="row">
-          <div><h3>Profesorji</h3></div>
-          <div style="margin-left:auto">
-            <button class="btn primary" onclick="openTeacherModal()">Dodaj profesorja</button>
-            <button class="btn" onclick="exportData('teachers')">Izvozi (JSON)</button>
-          </div>
-        </div>
-        <div style="overflow:auto;margin-top:8px">
-          <table id="teachersTable">
-            <thead><tr><th>Ime</th><th>Up. ime</th><th>Predmet</th><th>Akcije</th></tr></thead>
-            <tbody></tbody>
-          </table>
+          <button class="btn" id="addProfBtn">Dodaj profesorja</button>
+          <input type="text" id="searchProfs" placeholder="Išči po imenu..." />
         </div>
       </div>
 
-      <!-- Classes -->
-      <div id="classesView" class="card" style="display:none">
+      <div style="margin-top:10px" id="profTableWrap"></div>
+    </div>
+
+    <!-- ADMIN: RAZREDI -->
+    <div id="razrediView" class="card" style="display:none">
+      <div class="row space">
+        <h2>RAZREDI</h2>
         <div class="row">
-          <div><h3>Razredi</h3></div>
-          <div style="margin-left:auto">
-            <button class="btn primary" onclick="openClassModal()">Ustvari/uredi razred</button>
-            <button class="btn" onclick="exportData('classes')">Izvozi (JSON)</button>
-          </div>
-        </div>
-        <div style="margin-top:8px">
-          <table id="classesTable">
-            <thead><tr><th>Ime razreda</th><th>Št. učencev</th><th>Akcije</th></tr></thead>
-            <tbody></tbody>
-          </table>
+          <button class="btn" id="addClassBtn">Ustvari razred</button>
+          <input type="text" id="searchClasses" placeholder="Išči po imenu razreda..." />
         </div>
       </div>
 
-      <!-- Timetables -->
-      <div id="schedulesView" class="card" style="display:none">
-        <h3>Ureditev urnika</h3>
+      <div style="margin-top:10px" id="classesWrap"></div>
+    </div>
+
+    <!-- ADMIN: URNIKI -->
+    <div id="urnikiView" class="card" style="display:none">
+      <div class="row space">
+        <h2>URNIKI</h2>
         <div class="row">
-          <div class="col">
-            <label>Uredi za:</label>
-            <select id="scheduleTargetType">
-              <option value="prof">Profesor</option>
-              <option value="class">Razred</option>
-            </select>
-          </div>
-          <div class="col" id="profSelectCol">
-            <label>Izberi profesorja</label>
-            <select id="scheduleProf"></select>
-          </div>
-          <div class="col" id="classSelectCol" style="display:none">
-            <label>Izberi razred</label>
-            <select id="scheduleClass"></select>
-          </div>
-          <div class="col">
-            <label>Datum</label>
-            <input id="scheduleDate" type="date" />
-          </div>
-          <div class="col" style="min-width:140px;align-self:end">
-            <button class="btn primary" onclick="loadEditorSchedule()">Naloži urnik</button>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:12px">
-          <div class="row">
-            <div><strong>Ure (1 - 8)</strong></div>
-            <div style="margin-left:auto"><small class="muted">Klikni na posamezno uro za določitev razreda ali P (prosta ura).</small></div>
-          </div>
-          <div style="margin-top:8px" id="scheduleEditor"></div>
-          <div style="margin-top:8px" class="row">
-            <button class="btn primary" onclick="saveEditorSchedule()">Shrani urnik</button>
-            <button class="btn" onclick="clearEditorSchedule()">Počisti</button>
-          </div>
+          <select id="urnikTargetType">
+            <option value="profesor">Profesor</option>
+            <option value="razred">Razred</option>
+          </select>
+          <select id="urnikTargetSelect"></select>
+          <input type="date" id="urnikDate" />
+          <button class="btn" id="openUrnikBtn">Uredi urnik</button>
         </div>
       </div>
 
-      <!-- Professor dashboard -->
-      <div id="profView" class="card" style="display:none">
+      <div id="urnikEditorWrap" style="margin-top:12px;display:none"></div>
+    </div>
+
+    <!-- PROF: DOMOV (urnik z datumom) -->
+    <div id="profDomovView" class="card" style="display:none">
+      <div class="row space">
+        <h2>DOMOV — URNIK</h2>
         <div class="row">
-          <div><h3>Profesor — urnik</h3></div>
-          <div style="margin-left:auto">
-            <button class="btn" onclick="openGradebook()">Redovalnica</button>
-            <button class="btn" onclick="openClassView()">Razred</button>
-            <button class="btn" onclick="openHome()">Domov</button>
-          </div>
+          <input type="date" id="profDate" />
+          <select id="profClassSelect"></select>
         </div>
-
-        <div style="margin-top:8px" class="row">
-          <div class="col">
-            <label>Datum</label>
-            <input id="profDate" type="date" onchange="renderProfSchedule()" />
-          </div>
-          <div class="col">
-            <label>Izberi razred za prikaz (ali prazno)</label>
-            <select id="profClassFilter" onchange="renderProfSchedule()">
-              <option value="">-- vsi --</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="profScheduleArea" style="margin-top:12px"></div>
       </div>
 
-      <!-- Redovalnica (poenostavljeno) -->
-      <div id="gradebookView" class="card" style="display:none">
-        <h3>Redovalnica</h3>
-        <div class="muted tiny">Izberi razred, da vidiš učence in dodaš ocene.</div>
-        <div style="margin-top:8px" class="row">
-          <div class="col">
-            <label>Razred</label>
-            <select id="gradeClassSelect" onchange="renderGradebook()"></select>
-          </div>
-        </div>
-        <div id="gradebookTableArea" style="margin-top:8px"></div>
-      </div>
+      <div style="margin-top:12px" id="profScheduleWrap"></div>
+    </div>
 
-      <!-- Razred view (attendance summary for teacher) -->
-      <div id="classView" class="card" style="display:none">
-        <h3>Razred — pregled odsotnosti</h3>
-        <div class="row">
-          <div class="col">
-            <label>Razred</label>
-            <select id="classViewSelect" onchange="renderClassAttendance()"></select>
-          </div>
-        </div>
-        <div id="classAttendanceArea" style="margin-top:8px"></div>
+    <!-- PROF: REDOVALNICA -->
+    <div id="profRedovalnicaView" class="card" style="display:none">
+      <h2>REDOVALNICA — ocene</h2>
+      <div style="margin-top:8px">
+        <!-- Re-use & integrate slab prejšnji koda + dodaj shranjevanje -->
+        <div id="gradesArea"></div>
       </div>
+    </div>
 
-      <!-- Home simple -->
-      <div id="homeView" class="card" style="display:none">
-        <h3>Domov</h3>
-        <p>Dobrodošli v MINDEX. Izberite meni ali se prijavite kot drug uporabnik.</p>
+    <!-- PROF: RAZRED (pregled odsotnosti) -->
+    <div id="profRazredView" class="card" style="display:none">
+      <h2>RAZRED — pregled odsotnosti</h2>
+      <div class="row" style="margin-top:8px">
+        <select id="classForReport"></select>
+        <button class="btn" id="openClassReport">Odpri</button>
       </div>
+      <div style="margin-top:12px" id="classReportArea"></div>
+    </div>
+
+  </section>
+</main>
+
+<!-- GLOBAL MODALS -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalBox">
+    <div class="modal-title" id="modalTitle">Naslov</div>
+    <div class="modal-body" id="modalBody"></div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn ghost small" id="modalCancel">Prekliči</button>
+      <button class="btn small" id="modalOk">Shrani</button>
     </div>
   </div>
 </div>
 
-<!-- Modals -->
-<div id="modal" class="modal">
-  <div class="dialog" id="modalDialog">
-    <!-- dynamic content -->
+<!-- URA / PRISOTNOST modal (profesor klik na uro) -->
+<div class="modal-backdrop" id="attendanceBackdrop" style="display:none">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title" id="attTitle">Ura</div>
+    <div class="modal-body" id="attBody"></div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn ghost small" id="attClose">ZAPRI</button>
+      <button class="btn small" id="attHistory">ZGODOVINA UR</button>
+      <button class="btn small" id="attSave">SHRANI</button>
+    </div>
+  </div>
+</div>
+
+<!-- REDOVALNICA modali -->
+<div class="modal-backdrop" id="gradeBackdrop" style="display:none">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title" id="gradeModalTitle">Dodaj oceno</div>
+    <div class="modal-body" id="gradeModalBody"></div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn ghost small" id="gradeCancel">Prekliči</button>
+      <button class="btn small" id="gradeSave">Shrani</button>
+    </div>
   </div>
 </div>
 
 <script>
-/* =========================
-   Data model (localStorage)
-   =========================
-   We keep:
-   - users: {username, pass, role('admin'|'prof'), displayName, teacherId?}
-   - students: array of {id, name, dob, notes}
-   - teachers: array of {id, name, username, password, subject}
-   - classes: array of {id, name, studentIds:[]}
-   - schedules: object keyed by key = type|id|date -> {slots: [ "P" or classId or teacherId? for prof?"] } 
-       For editing by professor: if editing professor, slots contain classId or "P"
-       For class schedule: slots contain teacherId or "P"
-   - attendance: object keyed by date|classId -> {hour -> {teacherId, topic, absences: {studentId: true/false}}}
-   - grades: per student per period (simplified)
+/* === Data model in localStorage ===
+We keep a single object under key 'mindex_db' with:
+{
+  users: { username: {username, password, role, displayName, teacherId? } },
+  students: { id: {id, firstName, lastName, fullName} },
+  teachers: { id: {id, firstName, lastName, fullName, username? } },
+  classes: { id: {id, name, studentIds: [] } },
+  schedules: { // per date key yyyy-mm-dd
+    "2025-09-10": { // date
+      prof_<teacherId>: {slots: {1: classId|P, 2: classId|P, ... up to 8} },
+      class_<classId>: {slots: {1: teacherId|P, ...} }
+    }
+  },
+  attendance: { // keyed by date->classId->hour -> {teacherId, notes, absent: [studentId,...] }
+    "2025-09-10": { "class_1": { "2": { teacherId: 't1', absent: ['s3'], notes:'...' } } }
+  },
+  grades: { studentId: { period1: [ {value,type,date,comment} ], period2: [...], final: value } }
+}
 */
 
-const STORAGE_KEY = 'mindex_v1';
+const STORAGE_KEY = 'mindex_db_v1';
 
-function loadState(){
+function loadDB(){
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    return {
-      users: [],
-      students: [],
-      teachers: [],
-      classes: [],
-      schedules: {}, // key -> slots array (1..8)
-      attendance: {}, // key date|classId -> {hour: {teacherId, topic, absences:{}}}
-      grades: {} // studentId -> {period1: [...], period2: [...], final: value}
-    };
+  if(raw) try { return JSON.parse(raw); } catch(e){ console.warn('db parse fail',e) }
+  // default seed
+  const db = {
+    users: {},
+    students: {},
+    teachers: {},
+    classes: {},
+    schedules: {},
+    attendance: {},
+    grades: {}
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  return db;
+}
+function saveDB(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+}
+
+let db = loadDB();
+
+/* helper id makers */
+function uid(prefix){
+  return prefix + '_' + Math.random().toString(36).slice(2,9);
+}
+function fullname(o){ return (o.firstName || '') + (o.lastName ? ' ' + o.lastName : ''); }
+
+/* ---------- authentication & demo seeding ---------- */
+function ensureDefaults(){
+  // create admin user if not present
+  if(!db.users['admin']){
+    db.users['admin'] = { username:'admin', password:'admin123', role:'admin', displayName:'Administrator' };
   }
-  try{ return JSON.parse(raw); }
-  catch(e){ console.error('parse error', e); return {};}
+  saveDB();
 }
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+ensureDefaults();
 
-let state = loadState();
-let session = {user:null}; // runtime
-
-/* ----- Utilities ----- */
-function uid(prefix='id'){ return prefix+'_'+Math.random().toString(36).slice(2,9); }
-function byId(arr,id){ return arr.find(x=>x.id===id); }
-function todayISO(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
-
-/* ----- Initial seeds & demo ------------------------------------------------ */
-function ensureAdmin(){
-  // if no admin exists, create default admin
-  const hasAdmin = state.users.some(u=>u.role==='admin');
-  if (!hasAdmin){
-    state.users.push({username:'admin',password:'admin123',role:'admin',displayName:'Administrator'});
-    saveState();
-  }
-}
-ensureAdmin();
-
-/* Optional demo seed */
 function seedDemo(){
-  // create demo data if not present
-  if (state.students.length || state.teachers.length || state.classes.length){
-    if (!confirm('V sistemu so že podatki. Prepišem z demo podatki?')) return;
-    state = {users:[], students:[], teachers:[], classes:[], schedules:{}, attendance:{}, grades:{}};
+  // Create demo teachers, students, classes with some data if not present
+  // We don't overwrite existing
+  // Students
+  if(Object.keys(db.students).length === 0){
+    const s1 = uid('s'); db.students[s1] = {id:s1, firstName:'Novak', lastName:'Simon', fullName:'Novak Simon'};
+    const s2 = uid('s'); db.students[s2] = {id:s2, firstName:'Nugovička', lastName:'Pika', fullName:'Nugovička Pika'};
+    const s3 = uid('s'); db.students[s3] = {id:s3, firstName:'Ocepek', lastName:'Matija', fullName:'Ocepek Matija'};
+    const s4 = uid('s'); db.students[s4] = {id:s4, firstName:'Ogorevc', lastName:'Jaka', fullName:'Ogorevc Jaka'};
   }
-  // admin
-  state.users.push({username:'admin',password:'admin123',role:'admin',displayName:'Administrator'});
-  // teachers
-  const t1 = uid('t'); const t2 = uid('t');
-  state.teachers.push({id:t1,name:'Gorazd Novak',username:'gnovak',password:'gpass',subject:'Matematika'});
-  state.teachers.push({id:t2,name:'Barbara Kranjc',username:'bkranjc',password:'bpass',subject:'Slovenščina'});
-  state.users.push({username:'gnovak',password:'gpass',role:'prof',displayName:'Gorazd Novak',teacherId:t1});
-  state.users.push({username:'bkranjc',password:'bpass',role:'prof',displayName:'Barbara Kranjc',teacherId:t2});
-  // students
-  const s = [];
-  ['Novak Simon','Nugovička Pika','Ocepek Matija','Ogorevc Jaka','Kovač Ana','Kralj Žiga','Zupan Tjaša'].forEach((n,i)=>{
-    const id=uid('s'); s.push({id,name:n,dob:'2007-01-'+String(i+10).padStart(2,'0'),notes:''});
+
+  // Teachers
+  if(Object.keys(db.teachers).length === 0){
+    const t1 = uid('t'); db.teachers[t1] = {id:t1, firstName:'Kovač', lastName:'Maja', fullName:'Kovač Maja', username:'m.kovac'};
+    const t2 = uid('t'); db.teachers[t2] = {id:t2, firstName:'Zelenko', lastName:'Blaž', fullName:'Zelenko Blaž', username:'b.zelenko'};
+    // create users for teachers
+    if(!db.users['m.kovac']) db.users['m.kovac'] = {username:'m.kovac', password:'prof123', role:'teacher', displayName:'Kovač Maja', teacherId:t1};
+    if(!db.users['b.zelenko']) db.users['b.zelenko'] = {username:'b.zelenko', password:'prof123', role:'teacher', displayName:'Zelenko Blaž', teacherId:t2};
+  }
+
+  // Classes
+  if(Object.keys(db.classes).length === 0){
+    const c1 = uid('c'); db.classes[c1] = {id:c1, name:'1.A', studentIds: Object.keys(db.students).slice(0,3)};
+    const c2 = uid('c'); db.classes[c2] = {id:c2, name:'2.B', studentIds: Object.keys(db.students).slice(0,2)};
+  }
+
+  // Basic schedule for today
+  const today = new Date().toISOString().slice(0,10);
+  if(!db.schedules[today]){
+    db.schedules[today] = {};
+    const tkeys = Object.keys(db.teachers);
+    const ckeys = Object.keys(db.classes);
+    if(tkeys.length && ckeys.length){
+      const t1 = tkeys[0], c1 = ckeys[0];
+      db.schedules[today]['prof_' + t1] = { slots: {1: c1, 2:'P', 3: c1, 4:'P', 5: c1} };
+      db.schedules[today]['class_' + c1] = { slots: {1: t1, 2: null, 3: t1, 4:null, 5: t1 } };
+    }
+  }
+
+  saveDB();
+  refreshUI();
+  alert('Demo podatki naloženi.');
+}
+
+/* ---------- UI plumbing ---------- */
+
+const loginView = document.getElementById('loginView');
+const adminSidebar = document.getElementById('adminSidebar');
+const profSidebar = document.getElementById('profSidebar');
+const mainContent = document.getElementById('mainContent');
+
+const loggedAs = document.getElementById('logged-as');
+const logoutBtn = document.getElementById('logoutBtn');
+
+let currentUser = null;
+
+/* login */
+document.getElementById('loginBtn').addEventListener('click', () => {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if(!u || !p){ alert('Vpiši uporabniško ime in geslo.'); return; }
+  if(db.users[u] && db.users[u].password === p){
+    currentUser = db.users[u];
+    afterLogin();
+  } else {
+    alert('Napačno uporabniško ime ali geslo.');
+  }
+});
+
+document.getElementById('demoSeed').addEventListener('click', seedDemo);
+
+logoutBtn.addEventListener('click', () => {
+  currentUser = null;
+  showLogin();
+});
+
+/* after login view swap */
+function afterLogin(){
+  loginView.style.display = 'none';
+  logoutBtn.style.display = 'inline-block';
+  loggedAs.textContent = `Prijavljen kot: ${currentUser.displayName || currentUser.username} (${currentUser.role})`;
+
+  if(currentUser.role === 'admin'){
+    adminSidebar.style.display = 'block';
+    profSidebar.style.display = 'none';
+    showAdminView('ucenci');
+  } else if(currentUser.role === 'teacher'){
+    profSidebar.style.display = 'block';
+    adminSidebar.style.display = 'none';
+    showProfView('domov');
+  }
+  updateTopStats();
+}
+
+function showLogin(){
+  loginView.style.display = 'block';
+  adminSidebar.style.display = 'none';
+  profSidebar.style.display = 'none';
+  document.querySelectorAll('[id$="View"]').forEach(el => { if(el.id !== 'loginView') el.style.display = 'none'; });
+  logoutBtn.style.display = 'none';
+  loggedAs.textContent = '';
+}
+
+/* MENU clicks (admin) */
+document.getElementById('menuUcenci').addEventListener('click', ()=>showAdminView('ucenci'));
+document.getElementById('menuProfesorji').addEventListener('click', ()=>showAdminView('profesorji'));
+document.getElementById('menuRazredi').addEventListener('click', ()=>showAdminView('razredi'));
+document.getElementById('menuUrniki').addEventListener('click', ()=>showAdminView('urniki'));
+
+function setActiveMenu(name){
+  document.querySelectorAll('#adminSidebar .menu-btn').forEach(b=>b.classList.remove('active'));
+  const el = document.querySelector('#adminSidebar .menu-btn[data-view="'+name+'"]');
+  if(el) el.classList.add('active');
+}
+
+/* admin view renderer */
+function showAdminView(view){
+  setActiveMenu(view);
+  // hide all main content views except admin ones
+  document.getElementById('loginView').style.display = 'none';
+  ['ucenciView','profesorjiView','razrediView','urnikiView','profDomovView','profRedovalnicaView','profRazredView'].forEach(id=>{
+    document.getElementById(id).style.display = (id === view + 'View') ? 'block' : 'none';
   });
-  state.students = s;
-  // class
-  const classId = uid('c');
-  state.classes.push({id:classId,name:'1A',studentIds: s.slice(0,5).map(x=>x.id)});
-  state.classes.push({id:uid('c'),name:'2B',studentIds: s.slice(5).map(x=>x.id)});
-  // schedules empty
-  saveState();
-  alert('Demo podatki naloženi. Prijavite se kot admin (admin / admin123) ali kot prof (gnovak/gpass).');
+  // explicit mapping for names
+  if(view === 'ucenci') renderStudents();
+  if(view === 'profesorji') renderTeachers();
+  if(view === 'razredi') renderClasses();
+  if(view === 'urniki') renderUrnikTargets();
 }
 
-/* ----- Auth ----- */
-function doLogin(){
-  const user = document.getElementById('loginUser').value.trim();
-  const pass = document.getElementById('loginPass').value;
-  if (!user || !pass) { alert('Vnesi uporabniško ime in geslo'); return; }
-  const u = state.users.find(x=>x.username===user && x.password===pass);
-  if (!u){ alert('Neveljavni podatki'); return; }
-  session.user = u;
-  initAppAfterLogin();
+/* prof view */
+function setActiveProfMenu(name){
+  document.querySelectorAll('#profSidebar .menu-btn').forEach(b=>b.classList.remove('active'));
+  const el = document.querySelector('#profSidebar .menu-btn[data-view="'+name+'"]');
+  if(el) el.classList.add('active');
+}
+document.querySelectorAll('.prof-menu').forEach(b=>{
+  b.addEventListener('click', ()=> showProfView(b.dataset.view));
+});
+function showProfView(view){
+  setActiveProfMenu(view);
+  showProfView(view);
+}
+function showProfView(view){
+  // hide all
+  ['loginView','ucenciView','profesorjiView','razrediView','urnikiView','profDomovView','profRedovalnicaView','profRazredView'].forEach(id=>{
+    document.getElementById(id).style.display = 'none';
+  });
+  if(view === 'domov'){
+    document.getElementById('profDomovView').style.display = 'block';
+    renderProfDomov();
+  } else if(view === 'redovalnica'){
+    document.getElementById('profRedovalnicaView').style.display = 'block';
+    renderRedovalnica();
+  } else if(view === 'razred'){
+    document.getElementById('profRazredView').style.display = 'block';
+    renderProfRazred();
+  }
 }
 
-/* Logout */
-function logout(){
-  session.user = null;
-  document.getElementById('appView').style.display='none';
-  document.getElementById('loginView').style.display='block';
-  document.getElementById('topInfo').textContent = 'Prijava potrebna';
-  document.getElementById('loginUser').value=''; document.getElementById('loginPass').value='';
+/* Top stats for admin */
+function updateTopStats(){
+  if(currentUser && currentUser.role === 'admin'){
+    const s = Object.keys(db.students).length;
+    const t = Object.keys(db.teachers).length;
+    const c = Object.keys(db.classes).length;
+    document.getElementById('adminStats').innerHTML = `<div class="tiny">Učenci: <strong>${s}</strong> &nbsp; Profesorji: <strong>${t}</strong> &nbsp; Razredi: <strong>${c}</strong></div>`;
+  }
+  if(currentUser && currentUser.role === 'teacher'){
+    // quick schedule show
+    renderProfQuickSchedule();
+  }
 }
 
-/* ----- UI boot after login ----- */
-function initAppAfterLogin(){
-  document.getElementById('loginView').style.display='none';
-  document.getElementById('appView').style.display='block';
-  document.getElementById('topInfo').textContent = session.user.displayName + ' (' + session.user.role + ')';
-  document.getElementById('adminPanelHeader').style.display = session.user.role === 'admin' ? 'block' : 'flex';
-  document.getElementById('welcomeTitle').textContent = 'Pozdravljeni, ' + session.user.displayName;
-  document.getElementById('roleInfo').textContent = session.user.role === 'admin' ? 'Administrator' : 'Profesor';
-  buildMainTabs();
-  // show default view
-  if (session.user.role === 'admin'){
-    showTab('studentsView');
+/* ---------- STUDENTS management (ADMIN) ---------- */
+document.getElementById('addStudentBtn').addEventListener('click', ()=> openStudentModal());
+
+document.getElementById('searchStudents').addEventListener('input', (e)=> renderStudents(e.target.value.trim()));
+
+function renderStudents(filter=''){
+  const wrap = document.getElementById('studentsTableWrap');
+  const rows = Object.values(db.students).filter(s=> (s.fullName||'').toLowerCase().includes(filter.toLowerCase()));
+  let html = `<table><thead><tr><th>Ime</th><th>Razredi</th><th style="width:160px">Akcije</th></tr></thead><tbody>`;
+  rows.forEach(s=>{
+    const classes = Object.values(db.classes).filter(c=> c.studentIds.includes(s.id)).map(c=>c.name).join(', ');
+    html += `<tr>
+      <td>${s.fullName}</td>
+      <td>${classes || '<span class="muted tiny">—</span>'}</td>
+      <td>
+        <button class="btn ghost small" onclick="openStudentModal('${s.id}')">Uredi</button>
+        <button class="btn danger small" onclick="deleteStudent('${s.id}')">Izbriši</button>
+      </td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+/* modal helpers */
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalTitle = document.getElementById('modalTitle');
+const modalBody = document.getElementById('modalBody');
+const modalCancel = document.getElementById('modalCancel');
+const modalOk = document.getElementById('modalOk');
+
+modalCancel.addEventListener('click', ()=> closeModal());
+modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop) closeModal() });
+
+function openModal(title, bodyHTML, okCallback){
+  modalTitle.textContent = title;
+  modalBody.innerHTML = bodyHTML;
+  modalBackdrop.style.display = 'flex';
+  modalOk.onclick = ()=> { okCallback(); closeModal(); };
+}
+function closeModal(){
+  modalBackdrop.style.display = 'none';
+}
+
+/* Student modal */
+function openStudentModal(id){
+  const isNew = !id;
+  const s = isNew ? { firstName:'', lastName:'' } : db.students[id];
+  const template = `
+    <div class="flex-col">
+      <label>Ime</label><input id="m_first" type="text" value="${s.firstName || ''}" />
+      <label>Priimek</label><input id="m_last" type="text" value="${s.lastName || ''}" />
+      <label>Dodaj v razred (izberite ali pusti prazno)</label>
+      <select id="m_class"><option value="">— izberi —</option>${Object.values(db.classes).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select>
+    </div>
+  `;
+  openModal(isNew ? 'Dodaj učenca' : 'Uredi učenca', template, ()=>{
+    const first = document.getElementById('m_first').value.trim();
+    const last = document.getElementById('m_last').value.trim();
+    const cls = document.getElementById('m_class').value;
+    if(!first || !last){ alert('Vpiši ime in priimek.'); return; }
+    if(isNew){
+      const nid = uid('s');
+      db.students[nid] = { id:nid, firstName:first, lastName:last, fullName: first + ' ' + last };
+      if(cls){
+        db.classes[cls].studentIds.push(nid);
+      }
+    } else {
+      db.students[id].firstName = first;
+      db.students[id].lastName = last;
+      db.students[id].fullName = first + ' ' + last;
+      // move class if selected
+      if(cls){
+        // remove from other classes
+        Object.values(db.classes).forEach(c=>{
+          c.studentIds = c.studentIds.filter(x=> x!==id);
+        });
+        db.classes[cls].studentIds.push(id);
+      }
+    }
+    saveDB();
     renderStudents();
-    renderTeachers();
-    renderClasses();
-    populateScheduleSelectors();
-  } else {
-    // professor
-    showProfessorHome();
-    populateProfessorClassFilters();
-  }
-}
-
-/* ----- Tabs for admin ----- */
-function buildMainTabs(){
-  const tabs = document.getElementById('mainTabs');
-  tabs.innerHTML = '';
-  if (session.user.role === 'admin'){
-    addTab('Učenci','studentsView'); addTab('Profesorji','teachersView'); addTab('Razredi','classesView'); addTab('Urniki','schedulesView');
-  } else {
-    addTab('Domov','homeView'); addTab('Redovalnica','gradebookView'); addTab('Razred','classView');
-  }
-}
-function addTab(label,targetId){
-  const tabs = document.getElementById('mainTabs');
-  const b = document.createElement('button'); b.textContent = label;
-  b.onclick = ()=>{ showTab(targetId); };
-  tabs.appendChild(b);
-}
-function showTab(id){
-  // hide all main views
-  const views = ['studentsView','teachersView','classesView','schedulesView','profView','gradebookView','classView','homeView'];
-  views.forEach(v=>document.getElementById(v).style.display='none');
-  document.getElementById(id).style.display = 'block';
-  // activate tab look
-  Array.from(document.querySelectorAll('#mainTabs button')).forEach(btn=>btn.classList.remove('active'));
-  const btns = Array.from(document.querySelectorAll('#mainTabs button')).find(b=>b.textContent && b.onclick && b.onclick.toString().includes(id));
-  // fallback: if not find, mark by text
-  Array.from(document.querySelectorAll('#mainTabs button')).forEach(b=>{
-    if (b.textContent && b.textContent.toLowerCase().includes(id.replace('View','').toLowerCase())) b.classList.add('active');
+    updateTopStats();
   });
 }
 
-/* ----- STUDENTS CRUD ----- */
-function renderStudents(){
-  const tbody = document.querySelector('#studentsTable tbody'); tbody.innerHTML='';
-  state.students.forEach(s=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${s.name}</td>
-      <td>${s.dob||''}</td>
-      <td>${s.notes||''}</td>
-      <td>
-        <button class="btn" onclick="editStudent('${s.id}')">Uredi</button>
-        <button class="btn warn" onclick="deleteStudent('${s.id}')">Izbriši</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-}
-function openStudentModal(editId){
-  const isEdit = !!editId;
-  const s = isEdit ? byId(state.students,editId) : {id:uid('s'), name:'', dob:'', notes:''};
-  showModal(`
-    <h3>${isEdit?'Uredi učenca':'Dodaj učenca'}</h3>
-    <label>Ime in priimek</label><input id="m_name" value="${s.name.replace(/"/g,'&quot;')}" />
-    <label>Rojstni datum</label><input id="m_dob" type="date" value="${s.dob||''}" />
-    <label>Opombe</label><textarea id="m_notes">${s.notes||''}</textarea>
-    <div class="row" style="margin-top:8px">
-      <button class="btn primary" onclick="saveStudent('${s.id}')">Shrani</button>
-      <button class="btn" onclick="closeModal()">Prekliči</button>
-      ${isEdit?'<button class="btn warn" onclick="deleteStudent(\\''+s.id+'\\')">Izbriši</button>':''}
-    </div>
-  `);
-}
-function saveStudent(id){
-  const name = document.getElementById('m_name').value.trim();
-  const dob = document.getElementById('m_dob').value;
-  const notes = document.getElementById('m_notes').value;
-  if (!name){ alert('Vnesi ime'); return; }
-  const exists = byId(state.students,id);
-  if (exists){
-    exists.name = name; exists.dob = dob; exists.notes = notes;
-  } else {
-    state.students.push({id,name,dob,notes});
-  }
-  saveState(); renderStudents(); closeModal();
-}
-function editStudent(id){ openStudentModal(id); }
 function deleteStudent(id){
-  if (!confirm('Izbrišem učenca?')) return;
-  state.students = state.students.filter(s=>s.id!==id);
+  if(!confirm('Res želiš izbrisati učenca?')) return;
   // remove from classes
-  state.classes.forEach(c=> c.studentIds = c.studentIds.filter(x=>x!==id));
-  saveState(); renderStudents(); renderClasses();
+  Object.values(db.classes).forEach(c => {
+    c.studentIds = c.studentIds.filter(sid => sid !== id);
+  });
+  delete db.students[id];
+  saveDB();
+  renderStudents();
+  updateTopStats();
 }
 
-/* ----- TEACHERS CRUD ----- */
-function renderTeachers(){
-  const tbody = document.querySelector('#teachersTable tbody'); tbody.innerHTML='';
-  state.teachers.forEach(t=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${t.name}</td>
-      <td>${t.username||''}</td>
-      <td>${t.subject||''}</td>
+/* ---------- TEACHERS management (ADMIN) ---------- */
+document.getElementById('addProfBtn').addEventListener('click', ()=> openTeacherModal());
+
+document.getElementById('searchProfs').addEventListener('input', (e)=> renderTeachers(e.target.value.trim()));
+
+function renderTeachers(filter=''){
+  const wrap = document.getElementById('profTableWrap');
+  const rows = Object.values(db.teachers).filter(t=> (t.fullName||'').toLowerCase().includes(filter.toLowerCase()));
+  let html = `<table><thead><tr><th>Ime</th><th>Up. ime</th><th style="width:200px">Akcije</th></tr></thead><tbody>`;
+  rows.forEach(t=>{
+    const user = Object.values(db.users).find(u=> u.teacherId === t.id);
+    html += `<tr>
+      <td>${t.fullName}</td>
+      <td>${user ? user.username : '<span class="muted tiny">—</span>'}</td>
       <td>
-        <button class="btn" onclick="editTeacher('${t.id}')">Uredi</button>
-        <button class="btn warn" onclick="deleteTeacher('${t.id}')">Izbriši</button>
-      </td>`;
-    tbody.appendChild(tr);
+        <button class="btn ghost small" onclick="openTeacherModal('${t.id}')">Uredi</button>
+        <button class="btn danger small" onclick="deleteTeacher('${t.id}')">Izbriši</button>
+      </td>
+    </tr>`;
   });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
 }
-function openTeacherModal(editId){
-  const isEdit = !!editId;
-  const t = isEdit ? byId(state.teachers,editId) : {id:uid('t'),name:'',username:'',password:'',subject:''};
-  showModal(`
-    <h3>${isEdit?'Uredi profesorja':'Dodaj profesorja'}</h3>
-    <label>Ime</label><input id="m_t_name" value="${t.name.replace(/"/g,'&quot;')}" />
-    <label>Uporabniško ime</label><input id="m_t_user" value="${t.username||''}" />
-    <label>Geslo</label><input id="m_t_pass" type="password" value="${t.password||''}" />
-    <label>Predmet</label><input id="m_t_subj" value="${t.subject||''}" />
-    <div class="row" style="margin-top:8px">
-      <button class="btn primary" onclick="saveTeacher('${t.id}')">Shrani</button>
-      <button class="btn" onclick="closeModal()">Prekliči</button>
-      ${isEdit?'<button class="btn warn" onclick="deleteTeacher(\\''+t.id+'\\')">Izbriši</button>':''}
+
+function openTeacherModal(id){
+  const isNew = !id;
+  const t = isNew ? { firstName:'', lastName:'', username:'' } : db.teachers[id];
+  // find user
+  const user = id ? Object.values(db.users).find(u=> u.teacherId === id) : null;
+  const template = `
+    <div class="flex-col">
+      <label>Ime</label><input id="t_first" type="text" value="${t.firstName || ''}" />
+      <label>Priimek</label><input id="t_last" type="text" value="${t.lastName || ''}" />
+      <label>Uporabniško ime (za prijavo)</label><input id="t_user" type="text" value="${user ? user.username : (t.username || '')}" />
+      <label>Geslo (novo/ali obnova)</label><input id="t_pass" type="text" placeholder="${user ? 'pusti prazno za nespremenjeno' : 'nastavi geslo'}" />
     </div>
-  `);
-}
-function saveTeacher(id){
-  const name = document.getElementById('m_t_name').value.trim();
-  const username = document.getElementById('m_t_user').value.trim();
-  const password = document.getElementById('m_t_pass').value;
-  const subject = document.getElementById('m_t_subj').value.trim();
-  if (!name || !username){ alert('Ime in uporabniško ime obvezno'); return; }
-  const exists = byId(state.teachers,id);
-  if (exists){
-    // update teacher and user mapping
-    exists.name = name; exists.username = username; exists.password = password; exists.subject = subject;
-    // update users entry if exists
-    const user = state.users.find(u=>u.teacherId===id);
-    if (user){ user.username = username; user.password = password; user.displayName = name; }
-  } else {
-    state.teachers.push({id,name,username,password,subject});
-    state.users.push({username,password,role:'prof',displayName:name,teacherId:id});
-  }
-  saveState(); renderTeachers(); populateScheduleSelectors(); closeModal();
-}
-function editTeacher(id){ openTeacherModal(id); }
-function deleteTeacher(id){
-  if (!confirm('Izbrišem profesorja?')) return;
-  state.teachers = state.teachers.filter(t=>t.id!==id);
-  state.users = state.users.filter(u=>u.teacherId!==id);
-  saveState(); renderTeachers(); populateScheduleSelectors();
-}
-
-/* ----- CLASSES CRUD and QUICK ADD ----- */
-function renderClasses(){
-  const tbody = document.querySelector('#classesTable tbody'); tbody.innerHTML='';
-  state.classes.forEach(c=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${c.name}</td><td>${c.studentIds ? c.studentIds.length : 0}</td>
-      <td>
-        <button class="btn" onclick="openClassModal('${c.id}')">Uredi</button>
-        <button class="btn warn" onclick="deleteClass('${c.id}')">Izbriši</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-}
-function openClassModal(editId){
-  const isEdit = !!editId;
-  const c = isEdit ? byId(state.classes,editId) : {id:uid('c'),name:'',studentIds:[]};
-  // build student selection list
-  const studentOptions = state.students.map(s=>`<label><input type="checkbox" class="m_student_chk" value="${s.id}" ${c.studentIds.includes(s.id)?'checked':''}/> ${s.name}</label>`).join('<br>');
-  showModal(`
-    <h3>${isEdit?'Uredi razred':'Ustvari razred'}</h3>
-    <label>Ime razreda</label><input id="m_c_name" value="${(c.name||'').replace(/"/g,'&quot;')}" />
-    <div style="margin-top:8px">
-      <strong>Dodaj učence</strong><br>
-      <div style="display:flex;margin-top:6px;gap:8px">
-        <button class="btn" onclick="showQuickAdd()">QUICK ADD</button>
-        <button class="btn" onclick="showPickAdd()">IZBIRO</button>
-      </div>
-      <div id="quickAddArea" style="display:none;margin-top:8px">
-        <small class="muted">V polje spodaj vpišite vsak učenčev IME in PRIIMEK v svojo vrstico. Če učenec še ne obstaja, bo ustvarjen.</small>
-        <textarea id="m_quick_txt" rows="6" style="width:100%;margin-top:6px"></textarea>
-      </div>
-      <div id="pickAddArea" style="display:none;margin-top:8px;max-height:200px;overflow:auto;border:1px solid #eee;padding:8px">
-        ${studentOptions}
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:8px">
-      <button class="btn primary" onclick="saveClass('${c.id}')">Shrani</button>
-      <button class="btn" onclick="closeModal()">Prekliči</button>
-      ${isEdit?'<button class="btn warn" onclick="deleteClass(\\''+c.id+'\\')">Izbriši</button>':''}
-    </div>
-    <script>
-      function showQuickAdd(){ document.getElementById('quickAddArea').style.display='block'; document.getElementById('pickAddArea').style.display='none'; }
-      function showPickAdd(){ document.getElementById('quickAddArea').style.display='none'; document.getElementById('pickAddArea').style.display='block'; }
-    </script>
-  `);
-}
-function saveClass(id){
-  const name = document.getElementById('m_c_name').value.trim();
-  if (!name){ alert('Vnesi ime razreda'); return; }
-  const quickArea = document.getElementById('m_quick_txt');
-  let studentIds = [];
-  if (quickArea && quickArea.value.trim()){
-    const lines = quickArea.value.split('\n').map(l=>l.trim()).filter(Boolean);
-    lines.forEach(line=>{
-      // expect "Ime Priimek"
-      const existing = state.students.find(s=>s.name.toLowerCase() === line.toLowerCase());
-      if (existing) studentIds.push(existing.id);
-      else {
-        const nid = uid('s');
-        state.students.push({id:nid,name:line,dob:'',notes:''});
-        studentIds.push(nid);
-      }
-    });
-  } else {
-    // read checkboxes
-    const chks = Array.from(document.querySelectorAll('.m_student_chk')).filter(c=>c.checked).map(c=>c.value);
-    studentIds = chks;
-  }
-
-  const exists = byId(state.classes,id);
-  if (exists){
-    exists.name = name;
-    // merge selected students (if none selected keep existing)
-    if (studentIds.length) exists.studentIds = studentIds;
-  } else {
-    state.classes.push({id,name,studentIds});
-  }
-  saveState(); renderStudents(); renderClasses(); populateScheduleSelectors(); closeModal();
-}
-function deleteClass(id){
-  if (!confirm('Izbrišem razred?')) return;
-  state.classes = state.classes.filter(c=>c.id!==id);
-  // remove schedules & attendance associated? We'll leave orphan schedules but it's fine
-  saveState(); renderClasses(); populateScheduleSelectors();
-}
-
-/* ----- Schedule editor ----- */
-
-function populateScheduleSelectors(){
-  const profSel = document.getElementById('scheduleProf');
-  const classSel = document.getElementById('scheduleClass');
-  profSel.innerHTML = '';
-  classSel.innerHTML = '';
-  state.teachers.forEach(t=> {
-    const o = document.createElement('option'); o.value = t.id; o.textContent = t.name + (t.subject?(' — '+t.subject):'');
-    profSel.appendChild(o);
-  });
-  state.classes.forEach(c=> {
-    const o = document.createElement('option'); o.value = c.id; o.textContent = c.name + ' (' + (c.studentIds.length||0) + ' uč.)';
-    classSel.appendChild(o);
-  });
-  // also update professor dropdown in other views
-  populateProfessorClassFilters();
-  populateClassSelects();
-}
-function populateProfessorClassFilters(){
-  // for professor view: populate their classes if needed
-  const el = document.getElementById('profClassFilter');
-  el.innerHTML = '<option value="">-- vsi --</option>';
-  state.classes.forEach(c=>{
-    const o = document.createElement('option'); o.value = c.id; o.textContent = c.name;
-    el.appendChild(o);
-  });
-}
-function populateClassSelects(){
-  const gradeClass = document.getElementById('gradeClassSelect');
-  const classView = document.getElementById('classViewSelect');
-  if (gradeClass) { gradeClass.innerHTML = '<option value="">-- izberi --</option>'; state.classes.forEach(c=> gradeClass.appendChild(new Option(c.name,c.id))); }
-  if (classView) { classView.innerHTML = '<option value="">-- izberi --</option>'; state.classes.forEach(c=> classView.appendChild(new Option(c.name,c.id))); }
-}
-
-/* Editor UI */
-function loadEditorSchedule(){
-  const type = document.getElementById('scheduleTargetType').value;
-  const id = type==='prof' ? document.getElementById('scheduleProf').value : document.getElementById('scheduleClass').value;
-  const date = document.getElementById('scheduleDate').value;
-  if (!id || !date){ alert('Izberi profesorja/razred in datum'); return; }
-  const key = `${type}|${id}|${date}`;
-  const data = state.schedules[key] || {slots: Array(8).fill('P')};
-  // render 8 slots
-  const editor = document.getElementById('scheduleEditor'); editor.innerHTML = '';
-  const grid = document.createElement('div'); grid.className='grid-cols';
-  for(let i=0;i<8;i++){
-    const slot = document.createElement('div');
-    slot.className='slot';
-    slot.dataset.slotIndex = i;
-    slot.innerHTML = `<div style="text-align:center"><div style="font-weight:bold">Ura ${i+1}</div><div class="tiny muted">${data.slots[i]||'P'}</div></div>`;
-    slot.onclick = ()=> {
-      const input = prompt('Vpiši ID razreda ali "P" za prosto uro. (Lahko vpišeš tudi ime razreda - sistem poskuša najti id).', data.slots[i]||'P');
-      if (input===null) return;
-      const v = input.trim();
-      if (!v) return;
-      // try to resolve class by name if editing prof and wrote class name
-      let newVal = v;
-      if (type==='prof'){
-        // expect class id or name -> if name given, find class
-        const classByName = state.classes.find(c=>c.name.toLowerCase()===v.toLowerCase());
-        if (classByName) newVal = classByName.id;
-      } else {
-        // type === class: expect teacher id or name
-        const teacherByName = state.teachers.find(t=>t.name.toLowerCase()===v.toLowerCase() || t.username===v);
-        if (teacherByName) newVal = teacherByName.id;
-      }
-      data.slots[i]= newVal;
-      slot.querySelector('.tiny').textContent = newVal;
-      slot.style.border='1px dashed #888';
-    };
-    grid.appendChild(slot);
-  }
-  editor.appendChild(grid);
-  // attach data to editor DOM for later save
-  editor.dataset.currentKey = key;
-  editor.dataset.type = type;
-  editor.dataset.id = id;
-  editor.dataset.date = date;
-  // fill with saved
-  data.slots.forEach((v,i)=>{
-    const node = grid.children[i];
-    node.querySelector('.tiny').textContent = v;
-  });
-  // store temporary slots in element
-  editor.dataset.slots = JSON.stringify(data.slots);
-  // allow save button to call saveEditorSchedule()
-}
-function saveEditorSchedule(){
-  const editor = document.getElementById('scheduleEditor');
-  if (!editor.dataset.currentKey){ alert('Naloži urnik najprej'); return; }
-  const type = editor.dataset.type;
-  const id = editor.dataset.id;
-  const date = editor.dataset.date;
-  const key = `${type}|${id}|${date}`;
-  // read grid values
-  const slots = Array.from(editor.querySelectorAll('.slot')).map(n=>{
-    return n.querySelector('.tiny').textContent || 'P';
-  });
-  state.schedules[key] = {slots};
-  saveState();
-  alert('Urnik shranjen.');
-}
-function clearEditorSchedule(){
-  const editor = document.getElementById('scheduleEditor');
-  if (!editor.dataset.currentKey){ editor.innerHTML=''; return; }
-  Array.from(editor.querySelectorAll('.slot')).forEach(n=>{
-    n.querySelector('.tiny').textContent = 'P';
-  });
-}
-
-/* ----- PROFESSOR view & attendance ----- */
-
-function showProfessorHome(){
-  // prepare prof view
-  document.getElementById('profView').style.display='block';
-  // hide admin views
-  ['studentsView','teachersView','classesView','schedulesView','gradebookView','classView','homeView'].forEach(id=>document.getElementById(id).style.display='none');
-  // set date default
-  const pd = document.getElementById('profDate'); pd.value = todayISO();
-  populateProfessorClassFilters();
-  renderProfSchedule();
-}
-
-function renderProfSchedule(){
-  const prof = state.teachers.find(t=>t.id===session.user.teacherId);
-  if (!prof) { alert('Napaka: ni povezanega profesorja.'); return; }
-  const date = document.getElementById('profDate').value || todayISO();
-  const chosenClass = document.getElementById('profClassFilter').value;
-  // schedule key for professor
-  const key = `prof|${prof.id}|${date}`;
-  const ps = state.schedules[key] ? state.schedules[key].slots : Array(8).fill('P');
-  const area = document.getElementById('profScheduleArea'); area.innerHTML='';
-  const heading = document.createElement('div'); heading.innerHTML = `<strong>Urnik za ${prof.name} — ${date}</strong>`; area.appendChild(heading);
-  const grid = document.createElement('div'); grid.className='grid-cols'; grid.style.marginTop='8px';
-  for(let i=0;i<8;i++){
-    const slotDiv = document.createElement('div');
-    const slotVal = ps[i] || 'P';
-    // if slotVal refers to class id, get class name
-    let display = slotVal;
-    if (slotVal !== 'P') {
-      const c = byId(state.classes, slotVal);
-      if (c) display = c.name;
-    } else display = 'P (prosta)';
-    // if professor chose a class filter and this slot's class not matching, show muted
-    const isVisible = !chosenClass || chosenClass === (ps[i] || '');
-    slotDiv.innerHTML = `<div style="padding:8px;border-radius:6px;background:white;min-height:70px;display:flex;flex-direction:column;justify-content:space-between">
-      <div><strong>Ura ${i+1}</strong></div>
-      <div style="font-size:14px">${display}</div>
-      <div style="text-align:right"><button class="btn" onclick="openAttendanceDialog('${date}','${ps[i]||'P'}','${i+1}')">Odpri</button></div>
-    </div>`;
-    slotDiv.style.display = isVisible ? 'block' : 'none';
-    grid.appendChild(slotDiv);
-  }
-  area.appendChild(grid);
-}
-
-/* Attendance dialog: when teacher clicks a slot */
-function openAttendanceDialog(date, classOrP, hour){
-  // classOrP may be 'P' or classId
-  if (classOrP === 'P' || !classOrP){ alert('Prosta ura. Ni razreda.'); return; }
-  const classObj = byId(state.classes, classOrP);
-  if (!classObj){ alert('Razred ni najden'); return; }
-  const hourIdx = Number(hour)-1;
-  const attendanceKey = `${date}|${classObj.id}`;
-  const record = state.attendance[attendanceKey] || {};
-  const hourRecord = record[hourIdx] || {teacherId: session.user.teacherId, topic:'', absences:{}};
-  // build student list
-  const studentListHtml = classObj.studentIds.map(sid=>{
-    const s = byId(state.students, sid);
-    const absent = hourRecord.absences && hourRecord.absences[sid];
-    return `<div style="display:flex;justify-content:space-between;padding:6px;border-bottom:1px solid #f0f0f0">
-      <div><span class="${absent?'absent':'present'}" id="sa_${sid}">${s? s.name : ('(neznan) '+sid)}</span></div>
-      <div><button class="btn" onclick="toggleAbs('${attendanceKey}','${hourIdx}','${sid')}>Toggle</button></div>
-    </div>`;
-  }).join('');
-  // But above we used single quotes with injection; rewrite safely by constructing DOM instead of raw HTML. We'll build DOM below.
-  showModal('', false);
-  const dialog = document.getElementById('modalDialog'); dialog.innerHTML = '';
-  const h = document.createElement('h3'); h.textContent = `Razred: ${classObj.name} — ura ${hour}`;
-  dialog.appendChild(h);
-  const topicLabel = document.createElement('label'); topicLabel.textContent = 'Snov (tema)'; dialog.appendChild(topicLabel);
-  const topicInput = document.createElement('input'); topicInput.type='text'; topicInput.id='att_topic'; topicInput.value = hourRecord.topic||''; dialog.appendChild(topicInput);
-  const listWrap = document.createElement('div'); listWrap.style.maxHeight='280px'; listWrap.style.overflow='auto'; listWrap.style.marginTop='8px'; listWrap.style.border='1px solid #eee'; listWrap.style.padding='6px';
-  classObj.studentIds.forEach(sid=>{
-    const s = byId(state.students,sid) || {name:'(neznan)', id:sid};
-    const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.padding='6px'; row.style.borderBottom='1px solid #f7f7f7';
-    const nameSpan = document.createElement('span'); nameSpan.textContent = s.name; nameSpan.id = 'sa_' + sid;
-    if (hourRecord.absences && hourRecord.absences[sid]) nameSpan.className='absent'; else nameSpan.className='present';
-    nameSpan.style.cursor='pointer';
-    nameSpan.onclick = ()=> {
-      // toggle absence locally in UI
-      const cur = nameSpan.className === 'absent';
-      nameSpan.className = cur ? 'present' : 'absent';
-      // update hourRecord
-      hourRecord.absences = hourRecord.absences || {};
-      if (cur) { delete hourRecord.absences[sid]; } else { hourRecord.absences[sid] = true; }
-      // reflect to state but only when saved
-    };
-    const hoursNote = document.createElement('small'); hoursNote.className='muted tiny';
-    // compute student's absence summary for this date across hours if needed
-    row.appendChild(nameSpan);
-    row.appendChild(hoursNote);
-    listWrap.appendChild(row);
-  });
-  dialog.appendChild(listWrap);
-  const btnRow = document.createElement('div'); btnRow.className='row'; btnRow.style.marginTop='8px';
-  const btnSave = document.createElement('button'); btnSave.className='btn primary'; btnSave.textContent='Shrani'; btnSave.onclick = ()=>{
-    // persist hourRecord into state.attendance
-    const attKey = attendanceKey;
-    const sKey = `${date}|${classObj.id}`;
-    const rec = state.attendance[sKey] || {};
-    const hr = Number(hourIdx);
-    // read topic
-    const tval = document.getElementById('att_topic').value;
-    hourRecord.topic = tval;
-    hourRecord.teacherId = session.user.teacherId;
-    rec[hr] = hourRecord;
-    state.attendance[sKey] = rec;
-    saveState();
-    closeModal();
-    // optionally re-render schedule to mark saved
-    renderProfSchedule();
-    alert('Ura shranjena.');
-  };
-  const btnHistory = document.createElement('button'); btnHistory.className='btn'; btnHistory.textContent='ZGODOVINA UR'; btnHistory.onclick = ()=>{
-    openHourHistoryDialog(date, classObj.id);
-  };
-  const btnClose = document.createElement('button'); btnClose.className='btn'; btnClose.textContent='Zapri'; btnClose.onclick = ()=> closeModal();
-  btnRow.appendChild(btnSave); btnRow.appendChild(btnHistory); btnRow.appendChild(btnClose);
-  dialog.appendChild(btnRow);
-}
-
-function openHourHistoryDialog(date, classId){
-  const sKey = `${date}|${classId}`;
-  const rec = state.attendance[sKey] || {};
-  showModal('', false);
-  const dialog = document.getElementById('modalDialog'); dialog.innerHTML = '';
-  const h = document.createElement('h3'); h.textContent = 'Zgodovina ur za ' + date; dialog.appendChild(h);
-  const table = document.createElement('table'); table.style.width='100%';
-  const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>Ura</th><th>Učitelj</th><th>Snov</th><th>Št odsotnih</th></tr>'; table.appendChild(thead);
-  const tbody = document.createElement('tbody');
-  for(let i=0;i<8;i++){
-    const hr = rec[i];
-    const tr = document.createElement('tr');
-    const teacherName = hr && hr.teacherId ? (byId(state.teachers,hr.teacherId)?.name || '') : '';
-    const absentCount = hr && hr.absences ? Object.keys(hr.absences).length : 0;
-    tr.innerHTML = `<td>${i+1}</td><td>${teacherName}</td><td>${hr?.topic||''}</td><td>${absentCount}</td>`;
-    tbody.appendChild(tr);
-  }
-  table.appendChild(tbody);
-  dialog.appendChild(table);
-  const btn = document.createElement('div'); btn.style.marginTop='8px';
-  btn.innerHTML = `<button class="btn" onclick="closeModal()">Zapri</button>`;
-  dialog.appendChild(btn);
-}
-
-/* ----- Gradebook (simplified) ----- */
-function openGradebook(){
-  showTab('gradebookView');
-  document.getElementById('gradebookView').style.display='block';
-  populateClassSelects();
-}
-function renderGradebook(){
-  const classId = document.getElementById('gradeClassSelect').value;
-  const area = document.getElementById('gradebookTableArea'); area.innerHTML='';
-  if (!classId){ area.innerHTML='<small class="muted">Izberi razred</small>'; return; }
-  const c = byId(state.classes, classId);
-  if (!c){ area.innerHTML='Nepoznani razred'; return; }
-  const tbl = document.createElement('table');
-  tbl.innerHTML = `<thead><tr><th>Učenec</th><th>1. obdobje</th><th>2. obdobje</th><th>Konec</th></tr></thead>`;
-  const tbody = document.createElement('tbody');
-  c.studentIds.forEach(sid=>{
-    const s = byId(state.students, sid);
-    const g = state.grades[sid] || {};
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${s? s.name : '(neznan)'}</td>
-      <td><div id="g1_${sid}">${renderGradeSpan(g.period1||[])}</div></td>
-      <td><div id="g2_${sid}">${renderGradeSpan(g.period2||[])}</div></td>
-      <td><div id="gfin_${sid}">${g.final?('<strong>'+g.final+'</strong>'):'<button class="btn" onclick="openFinalModal(\\''+sid+'\\')">Določi</button>'}</div></td>`;
-    tbody.appendChild(row);
-  });
-  tbl.appendChild(tbody); area.appendChild(tbl);
-  // add click handlers to add grades
-  c.studentIds.forEach(sid=>{
-    const el1 = document.getElementById('g1_'+sid);
-    el1.insertAdjacentHTML('beforeend', `<div style="margin-top:6px"><button class="btn" onclick="openAddGrade('${sid}',1)">Dodaj oceno</button></div>`);
-    const el2 = document.getElementById('g2_'+sid);
-    el2.insertAdjacentHTML('beforeend', `<div style="margin-top:6px"><button class="btn" onclick="openAddGrade('${sid}',2)">Dodaj oceno</button></div>`);
-  });
-}
-function renderGradeSpan(arr){
-  if (!arr || !arr.length) return '';
-  return arr.map(g=>`<span class="badge">${g.value}${g.type?(' - '+g.type):''}</span>`).join(' ');
-}
-function openAddGrade(studentId, period){
-  showModal(`
-    <h3>Dodaj oceno</h3>
-    <div><strong>Učenec:</strong> ${byId(state.students,studentId)?.name||studentId}</div>
-    <label>Tip (pisna/ustna/izdelek)</label>
-    <select id="g_type"><option value="pisna">pisna</option><option value="ustna">ustna</option><option value="izdelek">izdelek</option></select>
-    <label>Vrednost (1-5 ali NPS)</label>
-    <input id="g_val" type="text" placeholder="npr. 4 ali NPS" />
-    <label>Komentar</label>
-    <textarea id="g_comm"></textarea>
-    <div class="row" style="margin-top:8px">
-      <button class="btn primary" onclick="saveAddGrade('${studentId}',${period})">Shrani</button>
-      <button class="btn" onclick="closeModal()">Prekliči</button>
-    </div>
-  `);
-}
-function saveAddGrade(studentId, period){
-  const type = document.getElementById('g_type').value;
-  const val = document.getElementById('g_val').value.trim();
-  const comm = document.getElementById('g_comm').value;
-  if (!val){ alert('Vnesi vrednost'); return; }
-  state.grades[studentId] = state.grades[studentId] || {};
-  const key = 'period'+period;
-  state.grades[studentId][key] = state.grades[studentId][key] || [];
-  state.grades[studentId][key].push({value:val,type,comment:comm,date:todayISO()});
-  saveState();
-  closeModal(); renderGradebook();
-}
-function openFinalModal(studentId){
-  showModal(`
-    <h3>Zaključna ocena</h3>
-    <div><strong>Učenec:</strong> ${byId(state.students,studentId)?.name||studentId}</div>
-    <label>Zaključna ocena</label>
-    <select id="final_sel"><option value="">-- izberi --</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-    <div class="row" style="margin-top:8px">
-      <button class="btn primary" onclick="saveFinal('${studentId}')">Shrani</button>
-      <button class="btn" onclick="closeModal()">Prekliči</button>
-    </div>
-  `);
-}
-function saveFinal(studentId){
-  const v = document.getElementById('final_sel').value;
-  if (!v){ alert('Izberi oceno'); return; }
-  state.grades[studentId] = state.grades[studentId] || {};
-  state.grades[studentId].final = v;
-  saveState();
-  closeModal(); renderGradebook();
-}
-
-/* ----- Class attendance summary (teacher 'Razred' view) ----- */
-function openClassView(){
-  showTab('classView');
-  document.getElementById('classView').style.display='block';
-  populateClassSelects();
-}
-function renderClassAttendance(){
-  const classId = document.getElementById('classViewSelect').value;
-  const area = document.getElementById('classAttendanceArea'); area.innerHTML='';
-  if (!classId) return;
-  const c = byId(state.classes,classId);
-  // build table: columns: Ime | opravicene | neopravičene | odprte | eye icon
-  const table = document.createElement('table');
-  table.innerHTML = `<thead><tr><th>Učenec</th><th>Opravičene</th><th>Neopravičene</th><th>Odprte</th><th></th></tr></thead>`;
-  const tbody = document.createElement('tbody');
-  // calculate counts by scanning state.attendance across all dates
-  const allDatesKeys = Object.keys(state.attendance).filter(k=>k.endsWith('|'+classId));
-  const dates = allDatesKeys.map(k=>k.split('|')[0]);
-  c.studentIds.forEach(sid=>{
-    let oprav=0, neoprav=0, odprt=0;
-    dates.forEach(date=>{
-      const rec = state.attendance[`${date}|${classId}`];
-      if (!rec) return;
-      Object.keys(rec).forEach(hr=>{
-        const hrrec = rec[hr];
-        if (!hrrec || !hrrec.absences) return;
-        if (hrrec.absences[sid]){
-          // for simplification - treat all absences as 'odprta' (open) unless teacher later marks)
-          odprt++;
+  `;
+  openModal(isNew ? 'Dodaj profesorja' : 'Uredi profesorja', template, ()=>{
+    const first = document.getElementById('t_first').value.trim();
+    const last = document.getElementById('t_last').value.trim();
+    const uname = document.getElementById('t_user').value.trim();
+    const pass = document.getElementById('t_pass').value;
+    if(!first || !last || !uname){ alert('Ime, priimek in uporabniško ime so obvezni.'); return; }
+    if(isNew){
+      const nid = uid('t');
+      db.teachers[nid] = { id:nid, firstName:first, lastName:last, fullName: first + ' ' + last, username: uname };
+      db.users[uname] = { username:uname, password: pass || 'prof123', role:'teacher', displayName: first + ' ' + last, teacherId: nid };
+    } else {
+      db.teachers[id].firstName = first;
+      db.teachers[id].lastName = last;
+      db.teachers[id].fullName = first + ' ' + last;
+      db.teachers[id].username = uname;
+      // update user record
+      const existing = Object.values(db.users).find(u=> u.teacherId === id);
+      if(existing){
+        // if username changed, rename key
+        if(existing.username !== uname){
+          delete db.users[existing.username];
+          db.users[uname] = existing;
+          existing.username = uname;
         }
+        if(pass) existing.password = pass;
+        existing.displayName = first + ' ' + last;
+      } else {
+        db.users[uname] = { username:uname, password: pass || 'prof123', role:'teacher', displayName: first + ' ' + last, teacherId: id };
+      }
+    }
+    saveDB();
+    renderTeachers();
+    updateTopStats();
+  });
+}
+
+function deleteTeacher(id){
+  if(!confirm('Izbriši profesorja?')) return;
+  // remove user
+  const userKey = Object.keys(db.users).find(k=> db.users[k].teacherId === id);
+  if(userKey) delete db.users[userKey];
+  delete db.teachers[id];
+  saveDB();
+  renderTeachers();
+  updateTopStats();
+}
+
+/* ---------- CLASSES management (ADMIN) ---------- */
+document.getElementById('addClassBtn').addEventListener('click', ()=> openClassModal());
+
+document.getElementById('searchClasses').addEventListener('input', (e)=> renderClasses(e.target.value.trim()));
+
+function renderClasses(filter=''){
+  const wrap = document.getElementById('classesWrap');
+  const rows = Object.values(db.classes).filter(c=> c.name.toLowerCase().includes(filter.toLowerCase()));
+  let html = `<table><thead><tr><th>Razred</th><th>Učenci</th><th style="width:200px">Akcije</th></tr></thead><tbody>`;
+  rows.forEach(c=>{
+    const students = c.studentIds.map(id=> db.students[id] ? db.students[id].fullName : id).join(', ');
+    html += `<tr>
+      <td>${c.name}</td>
+      <td style="max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${students || '<span class="muted tiny">—</span>'}</td>
+      <td>
+        <button class="btn ghost small" onclick="openClassModal('${c.id}')">Uredi</button>
+        <button class="btn danger small" onclick="deleteClass('${c.id}')">Izbriši</button>
+      </td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+/* class modal with QUICK ADD or IZBIRO */
+function openClassModal(id){
+  const isNew = !id;
+  const c = isNew ? { name:'', studentIds:[] } : db.classes[id];
+  const studentRows = Object.values(db.students).map(s=> `<option value="${s.id}">${s.fullName}</option>`).join('');
+  const template = `
+    <div class="flex-col">
+      <label>Ime razreda</label>
+      <input id="c_name" type="text" value="${c.name || ''}" />
+      <label>Način dodajanja učencev</label>
+      <div class="row">
+        <button class="btn ghost small" id="quickAddBtn">QUICK ADD</button>
+        <button class="btn ghost small" id="chooseAddBtn">IZBIRO</button>
+      </div>
+      <div id="quickAddArea" style="margin-top:8px; display:none">
+        <div class="tiny muted">V vsako vrstico vpiši: IME (presledek) PRIIMEK</div>
+        <textarea id="quickAddText" rows="6" placeholder="npr. Novak Simon\nNugovička Pika"></textarea>
+      </div>
+      <div id="chooseAddArea" style="margin-top:8px; display:none">
+        <div class="tiny muted">Izberi obstoječe učence</div>
+        <select id="chooseList" multiple style="height:120px">${studentRows}</select>
+      </div>
+    </div>
+  `;
+  openModal(isNew ? 'Ustvari razred' : 'Uredi razred', template, ()=>{
+    const name = document.getElementById('c_name').value.trim();
+    if(!name){ alert('Vpiši ime razreda.'); return; }
+    let newStudentIds = isNew ? [] : [...c.studentIds];
+    if(document.getElementById('quickAddArea').style.display !== 'none'){
+      const lines = document.getElementById('quickAddText').value.split('\n').map(l=>l.trim()).filter(Boolean);
+      lines.forEach(line=>{
+        // split to first word/last
+        const parts = line.split(/\s+/);
+        const first = parts.shift() || '';
+        const last = parts.join(' ') || '';
+        const sid = uid('s');
+        db.students[sid] = { id:sid, firstName:first, lastName:last, fullName: (first + ' ' + last).trim() };
+        newStudentIds.push(sid);
+      });
+    } else {
+      const sel = Array.from(document.getElementById('chooseList').selectedOptions).map(o=> o.value);
+      sel.forEach(sid => {
+        if(!newStudentIds.includes(sid)) newStudentIds.push(sid);
+      });
+    }
+    if(isNew){
+      const cid = uid('c');
+      db.classes[cid] = { id:cid, name, studentIds: newStudentIds };
+    } else {
+      db.classes[id].name = name;
+      db.classes[id].studentIds = newStudentIds;
+    }
+    saveDB();
+    renderClasses();
+    updateTopStats();
+  });
+
+  // small event wiring after modal shown
+  setTimeout(()=>{
+    document.getElementById('quickAddBtn').addEventListener('click', ()=>{
+      document.getElementById('quickAddArea').style.display = 'block';
+      document.getElementById('chooseAddArea').style.display = 'none';
+    });
+    document.getElementById('chooseAddBtn').addEventListener('click', ()=>{
+      document.getElementById('quickAddArea').style.display = 'none';
+      document.getElementById('chooseAddArea').style.display = 'block';
+    });
+    // if editing, populate chooseList selection
+    if(!isNew){
+      document.getElementById('chooseAddArea').style.display = 'block';
+      const sel = document.getElementById('chooseList');
+      c.studentIds.forEach(sid=>{
+        const opt = sel.querySelector(`option[value="${sid}"]`);
+        if(opt) opt.selected = true;
+      });
+    } else {
+      document.getElementById('quickAddArea').style.display = 'block';
+    }
+  },50);
+}
+
+function deleteClass(id){
+  if(!confirm('Izbriši razred?')) return;
+  // don't delete students
+  delete db.classes[id];
+  // also remove class schedule entries
+  Object.keys(db.schedules).forEach(date=>{
+    delete db.schedules[date]['class_' + id];
+    // also remove occurrences in prof slots
+    const slots = db.schedules[date];
+    Object.keys(slots).forEach(k=>{
+      const val = slots[k].slots;
+      Object.keys(val).forEach(hour=>{
+        if(val[hour] === id) val[hour] = null;
       });
     });
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${byId(state.students,sid)?.name||sid}</td><td><strong style="color:green">${oprav}</strong></td>
-      <td><strong style="color:red">${neoprav}</strong></td><td><strong>${odprt}</strong></td>
-      <td><button class="btn" onclick="openStudentAttendanceDialog('${classId}','${sid}')">👁️</button></td>`;
-    tbody.appendChild(tr);
   });
-  table.appendChild(tbody);
-  area.appendChild(table);
+  saveDB();
+  renderClasses();
+  updateTopStats();
 }
 
-/* Detailed student attendance modal */
-function openStudentAttendanceDialog(classId, studentId){
-  // list all attendance entries for the student
-  const rows = [];
-  Object.keys(state.attendance).forEach(k=>{
-    const parts = k.split('|');
-    const date = parts[0]; const cid = parts[1];
-    if (cid !== classId) return;
-    const rec = state.attendance[k];
-    Object.keys(rec).forEach(hr=>{
-      const hrrec = rec[hr];
-      if (hrrec && hrrec.absences && hrrec.absences[studentId]){
-        rows.push({date, hour: Number(hr)+1, teacherId: hrrec.teacherId, topic: hrrec.topic});
-      }
+/* ---------- URNIKI editor (ADMIN) ---------- */
+function renderUrnikTargets(){
+  // fill select with professors or classes based on dropdown
+  const typeSelect = document.getElementById('urnikTargetType');
+  const targetSelect = document.getElementById('urnikTargetSelect');
+  function fill(){
+    targetSelect.innerHTML = '';
+    if(typeSelect.value === 'profesor'){
+      Object.values(db.teachers).forEach(t=> {
+        const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.fullName;
+        targetSelect.appendChild(opt);
+      });
+    } else {
+      Object.values(db.classes).forEach(c=>{
+        const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name;
+        targetSelect.appendChild(opt);
+      });
+    }
+  }
+  typeSelect.addEventListener('change', fill);
+  fill();
+}
+
+document.getElementById('openUrnikBtn').addEventListener('click', ()=>{
+  const type = document.getElementById('urnikTargetType').value;
+  const id = document.getElementById('urnikTargetSelect').value;
+  const date = document.getElementById('urnikDate').value;
+  if(!id || !date){ alert('Izberi tip, cilj in datum.'); return; }
+  openUrnikEditor(type, id, date);
+});
+
+function openUrnikEditor(type, id, date){
+  // show editor
+  const wrap = document.getElementById('urnikEditorWrap');
+  wrap.style.display = 'block';
+  wrap.innerHTML = `<div class="card"><div class="row space"><div><strong>Urnik za ${type==='profesor' ? db.teachers[id].fullName : db.classes[id].name}</strong><div class="tiny muted">${date}</div></div><div><button class="btn" id="saveUrnik">Shrani urnik</button></div></div>
+    <div id="urnikSlots" style="margin-top:8px"></div></div>`;
+  const slotsDiv = document.getElementById('urnikSlots');
+
+  // ensure schedule object exists
+  if(!db.schedules[date]) db.schedules[date] = {};
+  const schedulesForDate = db.schedules[date];
+
+  // determine key for professor or class
+  const key = (type === 'profesor' ? 'prof_' + id : 'class_' + id);
+  if(!schedulesForDate[key]) schedulesForDate[key] = { slots: {} };
+  const slots = schedulesForDate[key].slots;
+
+  // allow up to 8 slots
+  let html = `<table><thead><tr><th>Ura</th><th>Vsebina</th></tr></thead><tbody>`;
+  for(let hr = 1; hr <= 8; hr++){
+    const val = slots[hr] || '';
+    if(type === 'profesor'){
+      // professor assigns which class or P (prost)
+      html += `<tr><td>${hr}.</td><td>
+        <select data-hr="${hr}" class="slot-select">
+          <option value="">— izberi —</option>
+          <option value="P"${val==='P' ? ' selected':''}>P (prosta ura)</option>
+          ${Object.values(db.classes).map(c=>`<option value="${c.id}" ${val===c.id?'selected':''}>${c.name}</option>`).join('')}
+        </select>
+      </td></tr>`;
+    } else {
+      // class assigns which teacher or P
+      html += `<tr><td>${hr}.</td><td>
+        <select data-hr="${hr}" class="slot-select">
+          <option value="">— izberi —</option>
+          <option value="P"${val==='P' ? ' selected':''}>P (prosta ura)</option>
+          ${Object.values(db.teachers).map(t=>`<option value="${t.id}" ${val===t.id?'selected':''}>${t.fullName}</option>`).join('')}
+        </select>
+      </td></tr>`;
+    }
+  }
+  html += `</tbody></table>`;
+  slotsDiv.innerHTML = html;
+
+  document.getElementById('saveUrnik').addEventListener('click', ()=>{
+    const selects = slotsDiv.querySelectorAll('.slot-select');
+    selects.forEach(s=>{
+      const hr = s.dataset.hr;
+      const v = s.value || null;
+      slots[hr] = v;
+    });
+    // additionally, keep consistent mapping: if editing prof, update class_ entries and vice versa
+    // We'll naively create reciprocal entries for simple cases:
+    if(type === 'profesor'){
+      // for each hr, if we set class X, set db.schedules[date]['class_'+X].slots[hr] = teacherId
+      Object.keys(slots).forEach(hr=>{
+        const clsid = slots[hr];
+        if(!clsid || clsid === 'P') {
+          // if previously some class had this teacher assigned at hr, we don't delete – keep minimal approach
+        } else {
+          if(!db.schedules[date]['class_'+clsid]) db.schedules[date]['class_'+clsid] = { slots: {} };
+          db.schedules[date]['class_'+clsid].slots[hr] = id; // teacher id
+        }
+      });
+    } else {
+      // type class: for each hr, if teacher set, set prof_* slot hr to class id
+      Object.keys(slots).forEach(hr=>{
+        const tid = slots[hr];
+        if(!tid || tid === 'P') return;
+        if(!db.schedules[date]['prof_'+tid]) db.schedules[date]['prof_'+tid] = { slots: {} };
+        db.schedules[date]['prof_'+tid].slots[hr] = id;
+      });
+    }
+    saveDB();
+    alert('Urnik shranjen.');
+    renderUrnikTargets();
+  });
+
+}
+
+/* ---------- PROF: DOMOV (urnik z datumom) ---------- */
+document.getElementById('profDate').addEventListener('change', renderProfDomov);
+document.getElementById('profClassSelect').addEventListener('change', renderProfDomov);
+
+function renderProfDomov(){
+  // Fill class select with classes the professor teaches (based on schedules) OR all classes if none
+  const profId = currentUser ? currentUser.teacherId : null;
+  if(!profId) return;
+  const classSelect = document.getElementById('profClassSelect');
+  classSelect.innerHTML = '<option value="">— izberi razred —</option>';
+  Object.values(db.classes).forEach(c=>{
+    const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name;
+    classSelect.appendChild(opt);
+  });
+
+  // Now show schedule for selected date
+  const date = document.getElementById('profDate').value || new Date().toISOString().slice(0,10);
+  document.getElementById('profDate').value = date;
+  const wrap = document.getElementById('profScheduleWrap');
+  wrap.innerHTML = '';
+
+  const scheduleForDate = db.schedules[date] || {};
+  const profKey = 'prof_' + profId;
+  const profSlots = (scheduleForDate[profKey] && scheduleForDate[profKey].slots) || {};
+
+  // display 8 hours
+  let html = `<div><strong>${db.teachers[profId].fullName}</strong> — ${date}</div><div style="margin-top:10px"><table><thead><tr><th>Ura</th><th>Razred / status</th></tr></thead><tbody>`;
+  for(let hr=1; hr<=8; hr++){
+    const cls = profSlots[hr] || null;
+    let cellText = '';
+    let cellClass = '';
+    if(!cls || cls === '') {
+      cellText = '<span class="muted tiny">— ni določeno —</span>';
+    } else if(cls === 'P'){
+      cellText = '<span class="muted tiny line-through">PROSTO (P)</span>';
+      cellClass = 'muted';
+    } else {
+      const cname = db.classes[cls] ? db.classes[cls].name : cls;
+      // determine if saved attendance exists for this date/class/hr
+      const att = (db.attendance[date] && db.attendance[date]['class_'+cls] && db.attendance[date]['class_'+cls][hr]) || null;
+      if(att) cellText = `<span class="saved-hour">${cname}</span>`;
+      else cellText = `<span class="open-hour">${cname}</span>`;
+    }
+    html += `<tr>
+      <td style="width:70px">${hr}.</td>
+      <td><div class="row space"><div>${cellText}</div><div><button class="btn small" onclick="openAttendanceModal('${date}','${hr}','${cls}')">Odpri</button></div></div></td>
+    </tr>`;
+  }
+  html += `</tbody></table></div>`;
+  wrap.innerHTML = html;
+}
+
+/* attendance modal functions */
+const attendanceBackdrop = document.getElementById('attendanceBackdrop');
+const attTitle = document.getElementById('attTitle');
+const attBody = document.getElementById('attBody');
+const attClose = document.getElementById('attClose');
+const attSave = document.getElementById('attSave');
+const attHistory = document.getElementById('attHistory');
+
+attClose.addEventListener('click', ()=> { attendanceBackdrop.style.display = 'none'; });
+attSave.addEventListener('click', ()=> saveAttendance());
+attHistory.addEventListener('click', ()=> openAttendanceHistory());
+
+let attendanceContext = null; // {date, hour, classId, teacherId, list...}
+
+function openAttendanceModal(date, hour, classId){
+  // classId may be null or 'P' or actual
+  attendanceBackdrop.style.display = 'flex';
+  const profId = currentUser.teacherId;
+  attTitle.textContent = `Razred: ${classId && db.classes[classId] ? db.classes[classId].name : (classId === 'P' ? 'PROSTO' : '— ni razreda —')} — ura ${hour} — ${date}`;
+  attBody.innerHTML = '';
+
+  if(!classId || classId === 'P'){
+    attBody.innerHTML = `<div class="muted">Za to uro ni razreda ali je prosta ura — ni mogoče voditi prisotnosti.</div>`;
+    attendanceContext = { date, hour, classId, teacherId: profId, absent: [], notes:'' };
+    return;
+  }
+
+  const students = db.classes[classId] ? db.classes[classId].studentIds.map(id=> db.students[id]) : [];
+  // existing attendance entry
+  const att = db.attendance[date] && db.attendance[date]['class_'+classId] && db.attendance[date]['class_'+classId][hour];
+  const absentSet = new Set(att ? att.absent : []);
+  attendanceContext = { date, hour, classId, teacherId: profId, absent: Array.from(absentSet), notes: att ? (att.notes || '') : '' };
+
+  // build students list (click toggles absent)
+  let shtml = `<div class="tiny muted">Klikni ime, da označiš/opozabiš odsotnost (rdeče = odsoten)</div><div style="margin-top:8px">`;
+  students.forEach(s=>{
+    const isAbsent = absentSet.has(s.id);
+    shtml += `<div style="padding:6px 8px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
+      <div class="stu-name ${isAbsent ? 'absent' : ''}" data-sid="${s.id}" style="cursor:pointer">${s.fullName}${isAbsent ? ' ('+ (att && att.hourList ? att.hourList.join(',') : hour) +')' : ''}</div>
+      <div><button class="btn ghost small" onclick="toggleAbs('${s.id}')">${isAbsent ? 'Označeno' : 'Označi'}</button></div>
+    </div>`;
+  });
+  shtml += `</div><div style="margin-top:8px"><label>Opomba</label><textarea id="attNotes" rows="3">${attendanceContext.notes || ''}</textarea></div>`;
+  attBody.innerHTML = shtml;
+
+  // add click listeners for names
+  attBody.querySelectorAll('.stu-name').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      const sid = el.dataset.sid;
+      toggleAbs(sid);
     });
   });
-  showModal('', false);
-  const dialog = document.getElementById('modalDialog'); dialog.innerHTML = `<h3>Odsotnosti za učenec</h3>`;
-  if (!rows.length){ dialog.innerHTML += '<p>Ni odsotnosti.</p><div style="margin-top:8px"><button class="btn" onclick="closeModal()">Zapri</button></div>'; return; }
-  const table = document.createElement('table'); table.style.width='100%';
-  table.innerHTML = `<thead><tr><th>Datum</th><th>Ura</th><th>Učitelj</th><th>Snov</th><th>Akcija</th></tr></thead>`;
-  const tbody = document.createElement('tbody');
-  rows.forEach(r=>{
-    const tr = document.createElement('tr');
-    const tname = byId(state.teachers,r.teacherId)?.name || '';
-    tr.innerHTML = `<td>${r.date}</td><td>${r.hour}</td><td>${tname}</td><td>${r.topic||''}</td>
-      <td><button class="btn" onclick="toggleExcuse('${r.date}','${classId}','${r.hour-1}','${studentId}')">Opraviči/prekliči</button></td>`;
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  dialog.appendChild(table);
-  dialog.innerHTML += '<div style="margin-top:8px"><button class="btn" onclick="closeModal()">Zapri</button></div>';
+}
+function toggleAbs(sid){
+  const el = attBody.querySelector(`.stu-name[data-sid="${sid}"]`);
+  if(!el) return;
+  const idx = attendanceContext.absent.indexOf(sid);
+  if(idx === -1){
+    attendanceContext.absent.push(sid);
+    el.classList.add('absent');
+  } else {
+    attendanceContext.absent.splice(idx,1);
+    el.classList.remove('absent');
+  }
+  // refresh button text
+  const parent = el.parentElement;
+  const btn = parent.querySelector('button');
+  if(btn) btn.textContent = (attendanceContext.absent.includes(sid) ? 'Označeno' : 'Označi');
 }
 
-/* Toggle excuse - here we just remove absence as "opravičeno toggled simplicity" */
-function toggleExcuse(date, classId, hourIdx, studentId){
-  const key = `${date}|${classId}`;
-  const rec = state.attendance[key];
-  if (!rec || !rec[hourIdx] || !rec[hourIdx].absences) return alert('Ni podatka');
-  const was = rec[hourIdx].absences[studentId];
-  if (was){ delete rec[hourIdx].absences[studentId]; alert('Odsotnost odstranjena (lahko šteje kot opravičena v realnem sistemu).'); }
-  else { rec[hourIdx].absences[studentId]=true; alert('Odsotnost dodana'); }
-  state.attendance[key] = rec;
-  saveState();
+function saveAttendance(){
+  const ctx = attendanceContext;
+  if(!ctx || !ctx.classId || ctx.classId === 'P'){ attendanceBackdrop.style.display = 'none'; return; }
+  const notes = (document.getElementById('attNotes') ? document.getElementById('attNotes').value : '') || '';
+  if(!db.attendance[ctx.date]) db.attendance[ctx.date] = {};
+  if(!db.attendance[ctx.date]['class_'+ctx.classId]) db.attendance[ctx.date]['class_'+ctx.classId] = {};
+  db.attendance[ctx.date]['class_'+ctx.classId][ctx.hour] = { teacherId: ctx.teacherId, absent: Array.from(ctx.absent), notes, hourList: [] };
+  // store per-student hourList: for each absent student we append this hour to their record
+  // We'll also keep a simple per-student record in grades/attendance if needed
+  saveDB();
+  attendanceBackdrop.style.display = 'none';
+  renderProfDomov();
+}
+
+/* attendance history */
+function openAttendanceHistory(){
+  const ctx = attendanceContext;
+  if(!ctx) return;
+  // show simple listing with edit possibility: list all attendance entries for this class across dates
+  let list = [];
+  Object.keys(db.attendance).forEach(date=>{
+    const classNode = db.attendance[date]['class_'+ctx.classId];
+    if(classNode){
+      Object.keys(classNode).forEach(hr=>{
+        const entry = classNode[hr];
+        list.push({ date, hour: hr, entry });
+      });
+    }
+  });
+  let body = `<div class="tiny muted">Zgodovina ur za razred ${db.classes[ctx.classId].name}</div><table style="margin-top:8px"><thead><tr><th>Datum</th><th>Ura</th><th>Odsotni</th><th>Opombe</th><th>Akcije</th></tr></thead><tbody>`;
+  list.forEach(row=>{
+    const names = (row.entry.absent || []).map(sid=> db.students[sid] ? db.students[sid].fullName : sid).join(', ');
+    body += `<tr><td>${row.date}</td><td>${row.hour}</td><td>${names || '<span class="muted tiny">—</span>'}</td><td>${row.entry.notes || ''}</td><td><button class="btn ghost small" onclick="editAttendance('${row.date}','${ctx.classId}','${row.hour}')">Uredi</button></td></tr>`;
+  });
+  body += `</tbody></table>`;
+  openModal('ZGODOVINA UR', body, ()=>{ /* no save here */ });
+  // override cancel to close
+  modalCancel.onclick = ()=> closeModal();
+}
+
+/* edit attendance from history */
+function editAttendance(date, classId, hour){
+  // load into attendance modal
+  attendanceBackdrop.style.display = 'flex';
+  const att = db.attendance[date] && db.attendance[date]['class_'+classId] && db.attendance[date]['class_'+classId][hour];
+  const profId = att ? att.teacherId : currentUser.teacherId;
+  attTitle.textContent = `Zgodovina — ${db.classes[classId].name} — ${date} ura ${hour}`;
+  // build UI similar to openAttendanceModal
+  const students = db.classes[classId] ? db.classes[classId].studentIds.map(id=> db.students[id]) : [];
+  const absentSet = new Set(att ? att.absent : []);
+  attendanceContext = { date, hour, classId, teacherId: profId, absent: Array.from(absentSet), notes: att ? att.notes : '' };
+  let shtml = `<div class="tiny muted">Klikni ime, da označiš/opozabiš odsotnost (rdeče = odsoten)</div><div style="margin-top:8px">`;
+  students.forEach(s=>{
+    const isAbsent = absentSet.has(s.id);
+    shtml += `<div style="padding:6px 8px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
+      <div class="stu-name ${isAbsent ? 'absent' : ''}" data-sid="${s.id}" style="cursor:pointer">${s.fullName}${isAbsent ? ' ('+ hour +')' : ''}</div>
+      <div><button class="btn ghost small" onclick="toggleAbs('${s.id}')">${isAbsent ? 'Označeno' : 'Označi'}</button></div>
+    </div>`;
+  });
+  shtml += `</div><div style="margin-top:8px"><label>Opomba</label><textarea id="attNotes" rows="3">${attendanceContext.notes || ''}</textarea></div>`;
+  attBody.innerHTML = shtml;
+  attBody.querySelectorAll('.stu-name').forEach(el=>{
+    el.addEventListener('click', ()=> toggleAbs(el.dataset.sid));
+  });
+  // close modal that was open from history
   closeModal();
 }
 
-/* ----- Modal helpers ----- */
-function showModal(html, allowClose=true){
-  const modal = document.getElementById('modal'); const dialog = document.getElementById('modalDialog');
-  if (html) dialog.innerHTML = html; // if empty, caller will build DOM
-  modal.style.display='flex';
-  if (allowClose){
-    modal.onclick = function(e){ if (e.target === modal) closeModal(); };
-  } else {
-    modal.onclick = null;
+/* ---------- REDOVALNICA (ocenjevanje) ---------- */
+/* We'll reuse much of the earlier provided code but integrate with db.grades and admin/teacher flows */
+
+function renderRedovalnica(){
+  // simple UI: select class -> list students -> per student show period columns with clickable cells
+  const profId = currentUser.teacherId;
+  const html = `
+    <div class="row space">
+      <div>
+        <label>Izberi razred</label>
+        <select id="redClassSelect"></select>
+      </div>
+      <div>
+        <label>Iskanje</label>
+        <input id="redSearch" placeholder="Išči ime..." />
+      </div>
+    </div>
+    <div id="redTableWrap" style="margin-top:12px"></div>
+  `;
+  document.getElementById('gradesArea').innerHTML = html;
+  const select = document.getElementById('redClassSelect');
+  Object.values(db.classes).forEach(c=>{
+    const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name;
+    select.appendChild(opt);
+  });
+  select.addEventListener('change', ()=> buildRedTable());
+  document.getElementById('redSearch').addEventListener('input', ()=> buildRedTable());
+  if(select.options.length) select.value = select.options[0].value;
+  buildRedTable();
+}
+
+function buildRedTable(){
+  const cid = document.getElementById('redClassSelect').value;
+  const filter = document.getElementById('redSearch').value.trim().toLowerCase();
+  const wrap = document.getElementById('redTableWrap');
+  if(!cid){ wrap.innerHTML = '<div class="muted">Izberi razred.</div>'; return; }
+  const classObj = db.classes[cid];
+  const rows = classObj.studentIds.map(id=> db.students[id]).filter(s=> s && (s.fullName || '').toLowerCase().includes(filter));
+  let html = `<table id="gradesTable"><thead><tr><th>Učenec</th><th>1. oc. obdobje</th><th>2. oc. obdobje</th><th>Konec</th></tr></thead><tbody>`;
+  rows.forEach(s=>{
+    const g = db.grades[s.id] || { period1: [], period2: [], final: null };
+    const p1 = g.period1.map((it, i)=> `<span class="grade-span ${it.type==='pisna' ? 'red' : it.type==='ustna' ? 'blue' : 'green'}" data-student="${s.id}" data-period="1" data-index="${i}">${it.value}</span>`).join(' ');
+    const p2 = g.period2.map((it, i)=> `<span class="grade-span ${it.type==='pisna' ? 'red' : it.type==='ustna' ? 'blue' : 'green'}" data-student="${s.id}" data-period="2" data-index="${i}">${it.value}</span>`).join(' ');
+    html += `<tr class="grade-row"><td>${s.fullName}</td>
+      <td class="clickable" data-student="${s.id}" data-period="1">${p1}</td>
+      <td class="clickable" data-student="${s.id}" data-period="2">${p2}</td>
+      <td class="clickable" data-student="${s.id}" data-period="konec">${g.final ? `<span class="final-grade">${g.final}</span>` : ''}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+
+  // attach click listeners for editing/adding grades
+  wrap.querySelectorAll('.clickable').forEach(cell=>{
+    cell.addEventListener('click', (e)=>{
+      const studentId = cell.dataset.student;
+      const period = cell.dataset.period;
+      openGradeModal(studentId, period);
+    });
+  });
+
+  // clicking on individual span -> view/edit
+  wrap.querySelectorAll('.grade-span').forEach(span=>{
+    span.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const sid = span.dataset.student;
+      const period = span.dataset.period;
+      const index = parseInt(span.dataset.index);
+      openGradeViewModal(sid, period, index);
+    });
+  });
+}
+
+/* grade modal: add/edit */
+const gradeBackdrop = document.getElementById('gradeBackdrop');
+const gradeModalTitle = document.getElementById('gradeModalTitle');
+const gradeModalBody = document.getElementById('gradeModalBody');
+const gradeCancel = document.getElementById('gradeCancel');
+const gradeSave = document.getElementById('gradeSave');
+
+gradeCancel.addEventListener('click', ()=> gradeBackdrop.style.display = 'none');
+
+let gradeContext = null; // { studentId, period, index? existing? }
+
+function openGradeModal(studentId, period){
+  gradeBackdrop.style.display = 'flex';
+  gradeModalTitle.textContent = `Dodaj oceno — ${db.students[studentId].fullName} — ${period==='konec' ? 'Zaključna ocena' : period + '. obdobje'}`;
+  const template = `
+    <div class="flex-col">
+      ${period==='konec' ? `
+        <div>Povprečje: <span id="gradeAvg">—</span></div>
+        <div>
+          <label><input type="radio" name="finalGrade" value="1"> 1</label>
+          <label><input type="radio" name="finalGrade" value="2"> 2</label>
+          <label><input type="radio" name="finalGrade" value="3"> 3</label>
+          <label><input type="radio" name="finalGrade" value="4"> 4</label>
+          <label><input type="radio" name="finalGrade" value="5"> 5</label>
+        </div>
+      ` : `
+        <label>Datum: <input id="gradeDate" type="date" value="${new Date().toISOString().slice(0,10)}" /></label>
+        <label>Tip:
+          <select id="gradeType">
+            <option value="pisna">PISNA OCENA</option>
+            <option value="ustna">USTNA OCENA</option>
+            <option value="izdelek">IZDELEK</option>
+          </select>
+        </label>
+        <div>
+          <label><input type="radio" name="gradeValue" value="NPS"> NPS</label>
+          <label><input type="radio" name="gradeValue" value="1"> 1</label>
+          <label><input type="radio" name="gradeValue" value="2"> 2</label>
+          <label><input type="radio" name="gradeValue" value="3"> 3</label>
+          <label><input type="radio" name="gradeValue" value="4"> 4</label>
+          <label><input type="radio" name="gradeValue" value="5"> 5</label>
+        </div>
+        <label>Komentar</label><textarea id="gradeComment" rows="3"></textarea>
+      `}
+    </div>
+  `;
+  gradeModalBody.innerHTML = template;
+  gradeContext = { studentId, period, index: null };
+  if(period === 'konec'){
+    // compute average
+    const g = db.grades[studentId] || { period1: [], period2: [], final: null };
+    const all = [...(g.period1 || []), ...(g.period2 || [])].map(x=> parseFloat(x.value)).filter(v=> !isNaN(v));
+    const avg = all.length ? (all.reduce((a,b)=>a+b,0)/all.length).toFixed(2) : 'Ni ocen';
+    document.getElementById('gradeAvg').textContent = avg;
+  }
+  gradeSave.onclick = ()=>{
+    if(period === 'konec'){
+      const selected = Array.from(document.querySelectorAll('input[name="finalGrade"]')).find(i=>i.checked);
+      if(!selected){ alert('Izberi zaključeno oceno'); return; }
+      if(!db.grades[studentId]) db.grades[studentId] = { period1:[], period2:[], final: null };
+      db.grades[studentId].final = selected.value;
+      saveDB();
+      gradeBackdrop.style.display = 'none';
+      buildRedTable();
+      return;
+    }
+    const val = document.querySelector('input[name="gradeValue"]:checked');
+    const type = document.getElementById('gradeType').value;
+    const date = document.getElementById('gradeDate').value;
+    const comment = document.getElementById('gradeComment').value;
+    if(!val){ alert('Izberi oceno'); return; }
+    const item = { value: val.value, type, date, comment };
+    if(!db.grades[studentId]) db.grades[studentId] = { period1:[], period2:[], final: null };
+    if(period === '1') db.grades[studentId].period1.push(item);
+    else db.grades[studentId].period2.push(item);
+    saveDB();
+    gradeBackdrop.style.display = 'none';
+    buildRedTable();
+  };
+}
+
+/* view/edit single grade */
+function openGradeViewModal(studentId, period, index){
+  const g = db.grades[studentId][period==='1' ? 'period1' : 'period2'][index];
+  const body = `<div><strong>Ocena:</strong> ${g.value}</div><div><strong>Tip:</strong> ${g.type}</div><div><strong>Datum:</strong> ${g.date}</div><div><strong>Komentar:</strong> ${g.comment || '(ni)'}</div>
+    <div style="margin-top:8px"><button class="btn danger small" onclick="deleteGrade('${studentId}','${period}',${index})">Izbriši</button> <button class="btn ghost small" onclick="editGrade('${studentId}','${period}',${index})">Popravi</button></div>`;
+  openModal('OCENA', body, ()=>{closeModal();});
+}
+
+/* delete/edit grade */
+function deleteGrade(studentId, period, index){
+  if(!confirm('Izbriši oceno?')) return;
+  db.grades[studentId][period==='1' ? 'period1' : 'period2'].splice(index,1);
+  saveDB();
+  closeModal();
+  buildRedTable();
+}
+function editGrade(studentId, period, index){
+  closeModal();
+  // open add modal prefilled -> simple approach: remove old and reopen add
+  const arrKey = (period==='1' ? 'period1' : 'period2');
+  const item = db.grades[studentId][arrKey][index];
+  db.grades[studentId][arrKey].splice(index,1);
+  saveDB();
+  openGradeModal(studentId, period);
+  // prefill fields if needed after modal opens
+  setTimeout(()=>{
+    if(item){
+      const radios = document.querySelectorAll(`input[name="gradeValue"]`);
+      radios.forEach(r=>{ if(r.value === item.value) r.checked = true; });
+      document.getElementById('gradeType').value = item.type;
+      document.getElementById('gradeDate').value = item.date;
+      document.getElementById('gradeComment').value = item.comment;
+    }
+  },80);
+}
+
+/* ---------- PROF: RAZRED (pregled odsotnosti) ---------- */
+
+function renderProfRazred(){
+  const sel = document.getElementById('classForReport');
+  sel.innerHTML = '';
+  Object.values(db.classes).forEach(c=>{
+    const o = document.createElement('option'); o.value = c.id; o.textContent = c.name; sel.appendChild(o);
+  });
+  document.getElementById('openClassReport').addEventListener('click', ()=> {
+    const cid = document.getElementById('classForReport').value;
+    if(!cid) return;
+    buildClassReport(cid);
+  });
+}
+
+function buildClassReport(cid){
+  const wrap = document.getElementById('classReportArea');
+  const cls = db.classes[cid];
+  if(!cls) { wrap.innerHTML = '<div class="muted">Ni razreda</div>'; return; }
+  // For each student show counts: opravičene (we don't have distinction in our model; we'll treat any absence as 'odprta' open), non-excused none, open none — but implement tallies based on attendance records.
+  const stats = {};
+  Object.values(cls.studentIds).forEach(sid => { stats[sid] = { excused:0, unexcused:0, open:0, entries: [] }; });
+
+  Object.keys(db.attendance).forEach(date=>{
+    const node = db.attendance[date]['class_'+cid];
+    if(!node) return;
+    Object.keys(node).forEach(hr=>{
+      const entry = node[hr];
+      (entry.absent || []).forEach(sid=>{
+        const rec = stats[sid];
+        if(rec){
+          // we don't have excused flag -> consider all open
+          rec.open += 1;
+          rec.entries.push({ date, hour: hr, teacher: db.teachers[entry.teacherId] ? db.teachers[entry.teacherId].fullName : entry.teacherId, notes: entry.notes || '' });
+        }
+      });
+    });
+  });
+
+  let html = `<table><thead><tr><th>Učenec</th><th class="center">Opravičene</th><th class="center">Neopravičene</th><th class="center">Odprta</th><th>Pregled</th></tr></thead><tbody>`;
+  cls.studentIds.forEach(sid=>{
+    const s = db.students[sid];
+    const st = stats[sid] || {excused:0,unexcused:0,open:0,entries:[]};
+    html += `<tr><td>${s.fullName}</td><td class="center"><strong class="green">${st.excused}</strong></td><td class="center"><strong class="red">${st.unexcused}</strong></td><td class="center"><strong>${st.open}</strong></td>
+      <td><button class="btn ghost small" onclick="openStudentAttendanceDetails('${sid}','${cid}')">Oglej</button></td></tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+/* open student attendance details modal */
+function openStudentAttendanceDetails(sid, cid){
+  const entries = [];
+  Object.keys(db.attendance).forEach(date=>{
+    const node = db.attendance[date]['class_'+cid];
+    if(!node) return;
+    Object.keys(node).forEach(hr=>{
+      const entry = node[hr];
+      if(entry.absent && entry.absent.includes(sid)){
+        entries.push({ date, hour: hr, teacher: db.teachers[entry.teacherId] ? db.teachers[entry.teacherId].fullName : entry.teacherId, notes: entry.notes });
+      }
+    });
+  });
+  let body = `<div><strong>${db.students[sid].fullName}</strong></div><table style="margin-top:8px"><thead><tr><th>Datum</th><th>Ura</th><th>Učitelj</th><th>Opombe</th><th>Akcije</th></tr></thead><tbody>`;
+  entries.forEach((e, idx)=>{
+    body += `<tr><td>${e.date}</td><td>${e.hour}</td><td>${e.teacher}</td><td>${e.notes || ''}</td><td><button class="btn small ghost" onclick="toggleExcuse('${sid}','${cid}','${e.date}','${e.hour}', ${idx})">Opraviči/ne</button></td></tr>`;
+  });
+  body += `</tbody></table>`;
+  openModal('Odsotnosti učenca', body, ()=>{ closeModal(); });
+}
+
+/* toggle excuse (simple knob; we don't have excused flag stored -> we will store in attendance entry an excused map) */
+function toggleExcuse(sid, cid, date, hour, idx){
+  const entry = db.attendance[date] && db.attendance[date]['class_'+cid] && db.attendance[date]['class_'+cid][hour];
+  if(!entry) { alert('Ni vnosa.'); return; }
+  entry.excused = entry.excused || {};
+  entry.excused[sid] = !entry.excused[sid];
+  saveDB();
+  closeModal();
+  renderProfRazred();
+  alert('Spremenjeno opravičilo.');
+}
+
+/* ---------- small utilities & init ---------- */
+
+function refreshUI(){
+  // refresh visible views if needed
+  if(currentUser){
+    if(currentUser.role === 'admin'){ updateTopStats(); renderStudents(); renderTeachers(); renderClasses(); renderUrnikTargets(); }
+    if(currentUser.role === 'teacher'){ renderProfQuickSchedule(); }
   }
 }
-function closeModal(){ const modal = document.getElementById('modal'); modal.style.display='none'; document.getElementById('modalDialog').innerHTML=''; }
 
-/* ----- small helpers ----- */
-function exportData(type){
-  let data='';
-  if (type==='students') data = JSON.stringify(state.students,null,2);
-  if (type==='teachers') data = JSON.stringify(state.teachers,null,2);
-  if (type==='classes') data = JSON.stringify(state.classes,null,2);
-  const w = window.open(); w.document.write('<pre>'+escapeHtml(data)+'</pre>');
+/* quick schedule small widget for prof sidebar */
+function renderProfQuickSchedule(){
+  const wrap = document.getElementById('profQuickSchedule');
+  wrap.innerHTML = '';
+  if(!currentUser || currentUser.role !== 'teacher') return;
+  // show upcoming 3 days quick view
+  const tid = currentUser.teacherId;
+  const out = [];
+  for(let d=0; d<3; d++){
+    const date = new Date(); date.setDate(date.getDate()+d);
+    const key = date.toISOString().slice(0,10);
+    const sched = db.schedules[key] && db.schedules[key]['prof_'+tid] && db.schedules[key]['prof_'+tid].slots ? db.schedules[key]['prof_'+tid].slots : {};
+    const slots = Object.keys(sched).slice(0,5).map(hr=> `${hr}. ${ sched[hr] === 'P' ? 'P' : (db.classes[sched[hr]] ? db.classes[sched[hr]].name : '—')}` ).join(', ');
+    out.push(`<div class="tiny"><strong>${key}</strong> &nbsp; ${slots || '<span class="muted">ni urnika</span>'}</div>`);
+  }
+  wrap.innerHTML = out.join('');
 }
-function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
-/* ----- On load populate some UI pieces ----- */
-window.addEventListener('load', ()=>{
-  ensureAdmin();
-  populateScheduleSelectors();
-  populateClassSelects();
-  // default: show login
-  document.getElementById('loginView').style.display='block';
-});
+/* make initial display */
+if(!currentUser) showLogin();
+updateTopStats();
 
-/* Quick helpers used inline in generated buttons (must be global) */
+/* expose some functions to inline handlers */
+window.openAttendanceModal = openAttendanceModal;
+window.toggleAbs = toggleAbs;
+window.editAttendance = editAttendance;
 window.openStudentModal = openStudentModal;
 window.deleteStudent = deleteStudent;
-window.editStudent = editStudent;
 window.openTeacherModal = openTeacherModal;
 window.deleteTeacher = deleteTeacher;
-window.editTeacher = editTeacher;
 window.openClassModal = openClassModal;
 window.deleteClass = deleteClass;
-window.openGradebook = openGradebook;
-window.openClassView = openClassView;
-window.openHome = ()=>{ showTab('homeView'); document.getElementById('homeView').style.display='block'; };
+window.openStudentAttendanceDetails = openStudentAttendanceDetails;
+window.seedDemo = seedDemo;
 
-/* Because some functions used in generated HTML needed but were constructed earlier, ensure they exist */
-window.toggleAbs = function(attKey, hourIdx, sid){
-  // not used (kept for generated code safety)
-  console.log('toggleAbs',attKey,hourIdx,sid);
-};
+/* initial render calls (if logged in) */
+refreshUI();
 
-/* End of script */
 </script>
 
 </body>
