@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8">
+  <title>MINDEX - Šolski informacijski sistem</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f2f2f2; }
+    header { background: #333; color: white; padding: 10px; text-align: center; }
+    nav { background: #444; color: white; display: flex; justify-content: space-around; padding: 10px; }
+    nav button { background: #666; border: none; padding: 8px; color: white; cursor: pointer; }
+    nav button:hover { background: #888; }
+    .page { display: none; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; background: white; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background: #eee; }
+    .hidden { display: none; }
+    .btn { padding: 6px 10px; margin: 4px; border: none; background: #007bff; color: white; cursor: pointer; }
+    .btn:hover { background: #0056b3; }
+    .login { max-width: 300px; margin: 100px auto; background: white; padding: 20px; border-radius: 6px; }
+    .login input { width: 100%; padding: 8px; margin: 6px 0; }
+  </style>
+</head>
+<body>
+
+<div id="loginPage" class="login">
+  <h2>Prijava v MINDEX</h2>
+  <input type="text" id="username" placeholder="Uporabniško ime">
+  <input type="password" id="password" placeholder="Geslo">
+  <button class="btn" onclick="login()">Prijava</button>
+  <p><strong>Admin:</strong> admin / admin123</p>
+  <p><strong>Profesor:</strong> prof / prof123</p>
+</div>
+
+<div id="mainPage" class="hidden">
+  <header>
+    <h1>MINDEX - Šolski informacijski sistem</h1>
+  </header>
+  <nav id="menu"></nav>
+
+  <!-- Strani -->
+  <div id="ucenciPage" class="page">
+    <h2>Učenci</h2>
+    <table id="ucenciTable">
+      <thead><tr><th>Ime</th><th>Razred</th><th>Dejanje</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button class="btn" onclick="addUcenec()">Dodaj učenca</button>
+  </div>
+
+  <div id="profesorjiPage" class="page">
+    <h2>Profesorji</h2>
+    <table id="profesorjiTable">
+      <thead><tr><th>Ime</th><th>Uporabniško ime</th><th>Dejanje</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button class="btn" onclick="addProfesor()">Dodaj profesorja</button>
+  </div>
+
+  <div id="razrediPage" class="page">
+    <h2>Razredi</h2>
+    <table id="razrediTable">
+      <thead><tr><th>Ime razreda</th><th>Dejanje</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button class="btn" onclick="addRazred()">Dodaj razred</button>
+  </div>
+
+  <div id="urnikiPage" class="page">
+    <h2>Urniki</h2>
+    <p>(prikaz urnikov bo tukaj - demo)</p>
+  </div>
+
+  <div id="redovalnicaPage" class="page">
+    <h2>Redovalnica</h2>
+    <table id="gradesTable">
+      <thead>
+        <tr><th>Učenec</th><th>1. obdobje</th><th>2. obdobje</th><th>Konec</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+
+function login() {
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  if (u === "admin" && p === "admin123") {
+    currentUser = "admin";
+    showMain();
+  } else if (u === "prof" && p === "prof123") {
+    currentUser = "prof";
+    showMain();
+  } else {
+    alert("Napačno geslo!");
+  }
+}
+
+function showMain() {
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('mainPage').classList.remove('hidden');
+  buildMenu();
+}
+
+function buildMenu() {
+  const menu = document.getElementById('menu');
+  menu.innerHTML = "";
+  if (currentUser === "admin") {
+    ["UČENCI","PROFESORJI","RAZREDI","URNIKI"].forEach(m => {
+      const b = document.createElement('button');
+      b.textContent = m;
+      b.onclick = () => showPage(m.toLowerCase()+"Page");
+      menu.appendChild(b);
+    });
+  } else if (currentUser === "prof") {
+    ["DOMOV","REDOVALNICA","RAZRED"].forEach(m => {
+      const b = document.createElement('button');
+      b.textContent = m;
+      b.onclick = () => showPage(m.toLowerCase()+"Page");
+      menu.appendChild(b);
+    });
+  }
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = "none");
+  const el = document.getElementById(id);
+  if (el) el.style.display = "block";
+}
+
+// demo add functions
+function addUcenec() {
+  const t = document.querySelector("#ucenciTable tbody");
+  const tr = document.createElement("tr");
+  tr.innerHTML = "<td>Nov Učenec</td><td>-</td><td><button onclick='this.parentNode.parentNode.remove()'>Izbriši</button></td>";
+  t.appendChild(tr);
+}
+function addProfesor() {
+  const t = document.querySelector("#profesorjiTable tbody");
+  const tr = document.createElement("tr");
+  tr.innerHTML = "<td>Nov Profesor</td><td>uporabnik</td><td><button onclick='this.parentNode.parentNode.remove()'>Izbriši</button></td>";
+  t.appendChild(tr);
+}
+function addRazred() {
+  const t = document.querySelector("#razrediTable tbody");
+  const tr = document.createElement("tr");
+  tr.innerHTML = "<td>Novi Razred</td><td><button onclick='this.parentNode.parentNode.remove()'>Izbriši</button></td>";
+  t.appendChild(tr);
+}
+
+</script>
+</body>
+</html>
