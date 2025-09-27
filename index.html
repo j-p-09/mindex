@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>MINDEX - Evidenčni sistem odsotnosti</title>
   <style>
-    :root{--bg:#f6f8fb;--card:#fff;--accent:#2b6cb0;--danger:#d9534f}
+    :root{--bg:#f6f8fb;--card:#fff;--accent:#2b6cb0;--danger:#d9534f;--ok:#2ca46b}
     body{font-family:Inter,Segoe UI,Arial;margin:0;background:var(--bg);color:#111}
     .container{max-width:1100px;margin:28px auto;padding:18px}
     header{display:flex;align-items:center;justify-content:space-between}
@@ -28,14 +28,20 @@
     .grid9{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
     .hour-label{font-size:12px;text-align:center;padding:6px}
     .hour-cell{height:64px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px dashed #ddd;cursor:pointer}
+    .hour-cell.has-missing{background:rgba(44,164,107,0.12);border:1px solid rgba(44,164,107,0.22)}
     .crossed{text-decoration:line-through;color:#999}
     .modal{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center}
-    .modal .panel{width:720px;background:white;padding:14px;border-radius:10px}
+    .modal .panel{width:720px;background:white;padding:14px;border-radius:10px;max-height:85vh;overflow:auto}
+    .modal .panel.slideable{height:70vh;display:flex;flex-direction:column}
     .tag-red{color:crimson;font-weight:700}
     .tag-black{font-weight:700}
     .tiny{font-size:12px}
     textarea{min-height:80px}
     .mb{margin-bottom:10px}
+    .smallbtn{background:#e9ecef;border:none;padding:4px 6px;border-radius:4px;cursor:pointer}
+    .missing-row .name.tag-red{color:crimson}
+    .missing-row .name.tag-black{color:#111}
+    .op-controls{display:flex;gap:8px;align-items:center}
   </style>
 </head>
 <body>
@@ -169,9 +175,9 @@
     if(!localStorage.getItem('m_teachers')) LS.set('m_teachers',[]);
     if(!localStorage.getItem('m_students')) LS.set('m_students',[]);
     if(!localStorage.getItem('m_classes')) LS.set('m_classes',[]);
-    if(!localStorage.getItem('m_schedules')) LS.set('m_schedules',{}); // key: teacherId|date -> array 1..9
-    if(!localStorage.getItem('m_attendance')) LS.set('m_attendance',{}); // key teacher|date -> {hour: [{studentId,excused:boolean,addedAt}]}
-    if(!localStorage.getItem('m_lessons')) LS.set('m_lessons',{}); // key teacher|date -> {hour: text}
+    if(!localStorage.getItem('m_schedules')) LS.set('m_schedules',{});
+    if(!localStorage.getItem('m_attendance')) LS.set('m_attendance',{});
+    if(!localStorage.getItem('m_lessons')) LS.set('m_lessons',{});
   }
 
   initDB();
@@ -352,7 +358,8 @@
     openModal(`<h3>${c? 'Uredi razred':'Dodaj razred'}</h3>
       <div class="mb"><label>Ime razreda (npr. 1A)</label><input id="cl_name" value="${c?escapeHtml(c.name):''}"/></div>
       <div class="mb"><label>Seznam dijakov (vsak v svojo vrstico, ime priimek)</label>
-        <textarea id="cl_students">${c? (studentsAll.filter(s=>s.classId===c.id).map(s=>escapeHtml(s.name)).join('\n')):''}</textarea>
+        <textarea id="cl_students">${c? (studentsAll.filter(s=>s.classId===c.id).map(s=>escapeHtml(s.name)).join('
+')):''}</textarea>
       </div>
       <div style="text-align:right"><button id="saveClass" class="btn">Shrani</button></div>`);
     document.getElementById('saveClass').onclick = ()=>{
@@ -363,11 +370,11 @@
       else{ classes.push({id:uid('c'),name}); }
       LS.set('m_classes',classes);
       // ensure students exist and assigned
-      const lines = txt.split('\n').map(s=>s.trim()).filter(Boolean);
+      const lines = txt.split('
+').map(s=>s.trim()).filter(Boolean);
       const students = LS.get('m_students',[]);
       const classId = c? c.id : classes[classes.length-1].id;
       lines.forEach(line=>{
-        // find or create
         let found = students.find(s=>s.name.toLowerCase()===line.toLowerCase());
         if(found){ found.classId = classId; }
         else { students.push({id:uid('s'),name:line,classId}); }
@@ -377,7 +384,6 @@
     }
   }
   function deleteClass(id){
-    // remove class and unassign students
     const classes=LS.get('m_classes',[]).filter(c=>c.id!==id); LS.set('m_classes',classes);
     const students=LS.get('m_students',[]).map(s=> s.classId===id? {...s,classId:null}:s); LS.set('m_students',students);
   }
@@ -420,11 +426,13 @@
     grid.appendChild(btnSave);
     container.appendChild(grid);
   }
-  function saveScheduleFromEditor(){ loadScheduleEditor(); } // alias
+  function saveScheduleFromEditor(){ loadScheduleEditor(); }
 
   // ---------- Modal helpers ----------
-  function openModal(html){
-    const root = document.getElementById('modalRoot'); root.innerHTML = `<div class="modal" id="modalBox"><div class="panel">${html}<div style="text-align:right;margin-top:8px"><button id="closeModal" class="btn secondary">Zapri</button></div></div></div>`;
+  function openModal(html, opts={}){
+    const root = document.getElementById('modalRoot');
+    const panelClass = opts.slideable ? 'panel slideable' : 'panel';
+    root.innerHTML = `<div class="modal" id="modalBox"><div class="${panelClass}">${html}<div style="text-align:right;margin-top:8px"><button id="closeModal" class="btn secondary">Zapri</button></div></div></div>`;
     document.getElementById('closeModal').onclick = closeModal;
   }
   function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
@@ -433,7 +441,6 @@
 
   // ---------- TEACHER UI ----------
   function renderTeacherHome(){
-    // Show teacher dashboard with schedule selector and 9 columns
     app.innerHTML = `<div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h2>Učitelj: ${STATE.user.display || STATE.user.username}</h2>
@@ -455,7 +462,6 @@
       </div>
     </div>`;
     document.getElementById('logoutt').onclick = ()=>{ STATE.user=null; showLogin(); };
-    // populate classes select with classes that teacher has in any schedule or all classes
     const classes = LS.get('m_classes',[]);
     const sel = document.getElementById('teacherClass'); sel.innerHTML=''; classes.forEach(c=>{ const opt=document.createElement('option'); opt.value=c.id; opt.textContent=c.name; sel.appendChild(opt); });
     document.getElementById('loadTeacherSchedule').onclick = ()=>renderTeacherSchedule();
@@ -471,18 +477,21 @@
     const schedules = LS.get('m_schedules',{});
     const arr = schedules[key] || Array.from({length:9}).map(()=>null);
     const wrap = document.getElementById('teacherScheduleWrap'); wrap.innerHTML='';
-    // header hours
     const header = document.createElement('div'); header.className='grid9'; header.style.marginBottom='8px';
     for(let i=0;i<9;i++){ const h=document.createElement('div'); h.className='hour-label card'; h.style.textAlign='center'; h.textContent = i+1; header.appendChild(h); }
     wrap.appendChild(header);
-    // content row
     const content = document.createElement('div'); content.className='grid9';
+    const attendance = LS.get('m_attendance',{});
     for(let i=0;i<9;i++){
       const cell = document.createElement('div'); cell.className='hour-cell card';
       const classVal = arr[i];
       const className = classVal ? (LS.get('m_classes',[]).find(c=>c.id===classVal)||{}).name : 'P';
       if(className==='P'){ cell.innerHTML = '<span class="crossed">P</span>' }
       else cell.textContent = className;
+      // determine if this hour has any missing students recorded -> color green
+      const attKey = `${teacher.id}|${date}`;
+      const hasMissing = attendance[attKey] && attendance[attKey][i+1] && attendance[attKey][i+1].length>0;
+      if(hasMissing) cell.classList.add('has-missing');
       cell.dataset.hour = i+1; cell.dataset.classid = classVal || '';
       cell.onclick = ()=>{ if(!classVal) return; openHourModal(teacher.id,date,i+1,classVal); };
       content.appendChild(cell);
@@ -496,27 +505,29 @@
     const attendance = LS.get('m_attendance',{});
     const key = `${teacherId}|${date}`;
     if(!attendance[key]) attendance[key]={};
-    if(!attendance[key][hour]) attendance[key][hour]=[]; // array of {studentId,excused,addedAt}
+    if(!attendance[key][hour]) attendance[key][hour]=[];
     const studentsInClass = LS.get('m_students',[]).filter(s=>s.classId===classId);
-    // Build list of already recorded misses in any hour that day
-    const allRecForDay = attendance[key];
-    const statusLines = [];
-    Object.keys(allRecForDay).forEach(h=>{
-      allRecForDay[h].forEach(rec=>{
-        statusLines.push({studentId:rec.studentId, hour:h, excused:rec.excused});
+    // Build aggregated map of student's recorded hours that day
+    const studentMap = {}; // id -> Set of hours
+    Object.keys(attendance[key]).forEach(h=>{
+      (attendance[key][h]||[]).forEach(rec=>{
+        if(!studentMap[rec.studentId]) studentMap[rec.studentId]=new Set();
+        studentMap[rec.studentId].add(String(h));
       });
     });
-    // unique map
-    const studentMap = {};
-    statusLines.forEach(s=>{ if(!studentMap[s.studentId]) studentMap[s.studentId]=[]; studentMap[s.studentId].push(s.hour); });
 
     const modalHtml = `
-      <h3>Datum: ${date} — Razred: ${classObj.name} — Ura: ${hour}</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3>Datum: ${date} — Razred: ${classObj.name} — Ura: ${hour}</h3>
+        <div class="small">Klik na ime razreda doda/odstrani uro ${hour}</div>
+      </div>
       <div class="mb"><strong>MANKAJOČI DIJAKI</strong></div>
       <div style="display:flex;gap:12px">
         <div style="flex:1">
-          <div class="small">Seznam dijakov razreda (klik za označitev)</div>
-          <div class="list" style="max-height:220px;overflow:auto;margin-top:6px">${studentsInClass.map(s=>`<div style="padding:6px;border-bottom:1px solid #eee"><button data-stid="${s.id}" class="btn smallbtn" style="margin-right:8px">+</button>${escapeHtml(s.name)} <span class="tiny" style="margin-left:8px;color:#666">${studentMap[s.id]?(' (že prijavljen:'+studentMap[s.id].join(',' )+')') : ''}</span></div>`).join('')}</div>
+          <div class="small">Seznam dijakov razreda (klik za označitev/odznačitev)</div>
+          <div class="list" id="classStudentList" style="max-height:220px;overflow:auto;margin-top:6px">
+            ${studentsInClass.map(s=>`<div style="padding:6px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between"><div><button data-stid="${s.id}" class="smallbtn">+</button> ${escapeHtml(s.name)} <span class="tiny" style="margin-left:8px;color:#666">${studentMap[s.id]? '('+Array.from(studentMap[s.id]).join(',') +')' : ''}</span></div></div>`).join('')}
+          </div>
         </div>
         <div style="width:40%">
           <div class="small">Izbrani (manjkajoči) dijaki</div>
@@ -527,42 +538,92 @@
       </div>
     `;
     openModal(modalHtml);
-    // attach events for selecting students
-    document.querySelectorAll('[data-stid]').forEach(btn=>{
-      btn.onclick = ()=>{
-        const sid = btn.dataset.stid; const student = LS.get('m_students',[]).find(s=>s.id===sid);
-        addMissingStudentToBox(sid, student.name, hour);
+
+    // Helper to render/ensure an entry exists in selectedMissing for a student (aggregated hours shown)
+    function renderSelectedBoxForStudent(sid){
+      const selBox = document.getElementById('selectedMissing');
+      let existing = selBox.querySelector(`[data-sid="${sid}"]`);
+      const name = (LS.get('m_students',[]).find(s=>s.id===sid)||{}).name || '–';
+      const hoursSet = studentMap[sid] ? new Set(Array.from(studentMap[sid])) : new Set();
+      // mark whether this hour is included
+      const includesThis = hoursSet.has(String(hour));
+      // create if not exists
+      if(!existing){
+        const div = document.createElement('div'); div.className='missing-row'; div.dataset.sid=sid; div.dataset.excused='false';
+        div.style.padding='6px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between';
+        const left = document.createElement('div'); left.innerHTML = `<span class="name ${includesThis? 'tag-red':'tag-black'}">${escapeHtml(name)}</span> <span class="tiny" style="margin-left:6px;color:#666">(${Array.from(hoursSet).join(',') || hour})</span>`;
+        const right = document.createElement('div');
+        const btnRemove = document.createElement('button'); btnRemove.className='btn secondary'; btnRemove.textContent='Odstrani iz te ure';
+        btnRemove.onclick = ()=>{
+          // toggle off this hour locally
+          if(hoursSet.has(String(hour))){ hoursSet.delete(String(hour)); }
+          // update studentMap and UI label
+          studentMap[sid] = hoursSet;
+          if(hoursSet.size===0) { div.remove(); }
+          else { left.querySelector('.tiny').textContent = '('+Array.from(hoursSet).join(',')+')'; left.querySelector('.name').className = 'tag-black name'; }
+        };
+        right.appendChild(btnRemove);
+        div.appendChild(left); div.appendChild(right);
+        selBox.appendChild(div);
+        return div;
+      } else {
+        // update display hours
+        const tiny = existing.querySelector('.tiny'); if(tiny) tiny.textContent = '('+Array.from(hoursSet).join(',')+')';
+        const nameNode = existing.querySelector('.name'); if(nameNode) nameNode.className = includesThis? 'tag-red name':'tag-black name';
+        return existing;
+      }
+    }
+
+    // Pre-populate selectedMissing with all students who already have any record that day
+    Object.keys(studentMap).forEach(sid=>{
+      // only if student is in this class
+      if(studentsInClass.find(s=>s.id===sid)){
+        renderSelectedBoxForStudent(sid);
       }
     });
-    // populate already missing for this hour
-    const att = LS.get('m_attendance',{});
-    const curList = att[key] && att[key][hour] ? att[key][hour] : [];
-    curList.forEach(rec=> addMissingStudentToBox(rec.studentId, (LS.get('m_students',[]).find(s=>s.id===rec.studentId)||{}).name, hour, rec.excused) );
+
+    // Attach click handlers for class list buttons — toggle current hour for that student
+    document.querySelectorAll('[data-stid]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = btn.dataset.stid;
+        if(!studentMap[sid]) studentMap[sid]=new Set();
+        const set = studentMap[sid];
+        if(set.has(String(hour))){
+          // currently has this hour -> remove it
+          set.delete(String(hour));
+        } else {
+          // add current hour
+          set.add(String(hour));
+        }
+        // ensure selected box updated
+        const node = renderSelectedBoxForStudent(sid);
+        // update name color
+        const nameNode = node.querySelector('.name'); if(nameNode) nameNode.className = set.has(String(hour))? 'tag-red name' : 'tag-black name';
+        // update tiny hours
+        const tiny = node.querySelector('.tiny'); if(tiny) tiny.textContent = '('+Array.from(set).join(',')+')';
+      }
+    });
+
     // load lesson content
     const lessons = LS.get('m_lessons',{}); const lkey = `${teacherId}|${date}`; document.getElementById('lessonContent').value = (lessons[lkey] && lessons[lkey][hour]) ? lessons[lkey][hour] : '';
+
     document.getElementById('saveHour').onclick = ()=>{
-      // gather selected missing students from box
-      const box = document.getElementById('selectedMissing'); const rows = Array.from(box.querySelectorAll('.missing-row'));
-      const newRecs = rows.map(r=>({studentId:r.dataset.sid, excused: r.dataset.excused==='true', addedAt: new Date().toISOString()}));
-      const att2 = LS.get('m_attendance',{}); if(!att2[key]) att2[key]={}; att2[key][hour]=newRecs; LS.set('m_attendance',att2);
+      // For each student in studentMap, if their set includes current hour, ensure attendance[key][hour] includes them. If not, ensure they are removed from attendance[key][hour].
+      const att = LS.get('m_attendance',{});
+      if(!att[key]) att[key] = {};
+      att[key][hour] = [];
+      Object.keys(studentMap).forEach(sid=>{
+        const set = studentMap[sid];
+        if(set && set.has(String(hour))){
+          att[key][hour].push({studentId:sid, excused:false, addedAt:new Date().toISOString()});
+        }
+      });
+      // save other hours remain untouched (we didn't remove them)
+      LS.set('m_attendance',att);
       // save lesson text
       const lessons2 = LS.get('m_lessons',{}); if(!lessons2[lkey]) lessons2[lkey] = {}; lessons2[lkey][hour] = document.getElementById('lessonContent').value; LS.set('m_lessons',lessons2);
       alert('Ura shranjena'); closeModal(); renderTeacherSchedule();
     }
-  }
-  function addMissingStudentToBox(sid,name,hour,excused=false){
-    const box = document.getElementById('selectedMissing');
-    // prevent duplicates in box
-    if(box.querySelector(`[data-sid="${sid}"]`)){
-      // toggle to red if exists
-      const node = box.querySelector(`[data-sid="${sid}"]`); node.dataset.excused = (!JSON.parse(node.dataset.excused)); node.querySelector('.name').className = node.dataset.excused==='true'? 'tag-red name':'tag-black name';
-      return;
-    }
-    const div = document.createElement('div'); div.className='missing-row'; div.dataset.sid=sid; div.dataset.excused = excused? 'true':'false';
-    div.style.padding='6px;border-bottom:1px solid #eee';
-    div.innerHTML = `<span class="name ${excused? 'tag-black':'tag-red'}">${escapeHtml(name)}</span> <span class="tiny" style="margin-left:6px;color:#666">(${hour})</span> <button class="btn secondary" style="float:right">Odstrani</button>`;
-    div.querySelector('button').onclick = ()=>div.remove();
-    box.appendChild(div);
   }
 
   function openPastLessons(){
@@ -582,21 +643,25 @@
     });
   }
 
-  // OPRAVIČI page for teacher
+  // OPRAVIČI page for teacher (with slide up/down controls)
   function openOpraviciPage(){
-    // show interface where teacher picks class and sees students with counts and can toggle excused/unexcused per recorded absence
     const classes = LS.get('m_classes',[]);
-    const html = `<h3>OPRAVIČI</h3>
+    const html = `<div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3>OPRAVIČI</h3>
+      <div class="op-controls"><button id="opUp" class="btn secondary">Gor</button><button id="opDown" class="btn secondary">Dol</button></div>
+    </div>
       <div class="mb"><label>Izberi razred</label><select id="opClass"><option value="">-- izberi --</option>${classes.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}</select></div>
-      <div id="opContent"></div>`;
-    openModal(html);
+      <div id="opContent" style="max-height:60vh;overflow:auto"></div>`;
+    openModal(html, {slideable:true});
     document.getElementById('opClass').onchange = ()=>renderOpraviciContent(document.getElementById('opClass').value);
+    // slide buttons
+    document.getElementById('opUp').onclick = ()=>{ const el = document.getElementById('opContent'); el.scrollBy({top:-200,behavior:'smooth'}); };
+    document.getElementById('opDown').onclick = ()=>{ const el = document.getElementById('opContent'); el.scrollBy({top:200,behavior:'smooth'}); };
   }
   function renderOpraviciContent(classId){
     const students = LS.get('m_students',[]).filter(s=>s.classId===classId);
     const attendance = LS.get('m_attendance',{});
     const teacher = LS.get('m_teachers',[]).find(t=>t.username===STATE.user.username) || LS.get('m_teachers',[]).find(t=>t.id===STATE.user.teacherId);
-    // collect all records for this teacher across all dates
     const records = {};
     Object.keys(attendance).forEach(k=>{ if(k.startsWith(teacher.id+'|')){
       const date = k.split('|')[1]; Object.keys(attendance[k]).forEach(h=>{ attendance[k][h].forEach(rec=>{
@@ -612,8 +677,7 @@
     });
     html += '</div><div style="text-align:right;margin-top:8px"><button id="opSave" class="btn">Shrani spremembe</button></div>';
     document.getElementById('opContent').innerHTML = html;
-    document.getElementById('opSave').onclick = ()=>{ // apply changes
-      // naive approach: iterate attendance and update excused flags where class student
+    document.getElementById('opSave').onclick = ()=>{
       const att = LS.get('m_attendance',{});
       Object.keys(att).forEach(k=>{ if(k.startsWith(teacher.id+'|')){
         Object.keys(att[k]).forEach(h=>{ att[k][h].forEach((rec,i)=>{
